@@ -3,9 +3,9 @@
 THIS IS A CLOUDFORMATION YAML TEMPLATE FOR DEPLOYING AN END-TO-END WEB SERVER ARCHITECTURE ON AWS.
 by Harrison Sherwin (hasherwi@amazon.com)
 
-First, see my presentation here that's also in this package.
+First, see my presentation here that's also in this package (Sherwin_Demos_Presentation.pptx).
 
-Comments, Questions, and Bug Reports can be sent to: hasherwi@amazon.com
+Comments, Questions, and Bug Reports can be sent to: hasherwi@amazon.com.
 
 PREREQUISITES:
   - Make sure you have permissions to add S3 Bucket Policies on a per bucket basis.
