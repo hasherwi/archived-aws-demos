@@ -21,23 +21,23 @@ DEPLOYMENT STEPS:
   2. (Optional) Add static web components to the auto-generated S3 bucket.
 
 KNOWN ISSUES:
-  Removing AZs during stack modification can fail to delete public subnets related to ALB ENIs.
+  - Removing AZs during stack modification can fail to delete public subnets related to ALB ENIs.
     ---No workaround known, manually delete the ALB.
 
-  When using a domain, a hosted zone is required to already exist and the stack must be deployed to us-east-1. These are the only current dependencies because domains purchased outside of Route 53 require advance notice of name server configurations.
+  - When using a domain, a hosted zone is required to already exist and the stack must be deployed to us-east-1. These are the only current dependencies because domains purchased outside of Route 53 require advance notice of name server configurations.
     ---No workaround, create the hosted zone before stack deployment.
 
-  A common limit that can halt deployment are Elastic IPs. By default, every account has a limit of 5 EIPs per region.
+  - A common limit that can halt deployment are Elastic IPs. By default, every account has a limit of 5 EIPs per region.
     ---Workaround 1: Request a service quota increase before deployment.
     ---Workaround 2: Deploy fewer NAT Gateways.
     ---Planned Resolution: Construct a Lambda function to check if deployment will result in a service quota violation, and if so, request the increase via the AWS API.
 
 RELEASE NOTES:
-  Version 1.0, 22 June 2021:
+  - Version 1.0, 22 June 2021:
     Initial Release.
     
 PLANNED IMPROVEMENTS:
-  More Functionality:
+  - More Functionality:
     Add resources for Transit Gateway demos.
     Add Lambda demos.
     Add ECS/EKS/ECR/Fargate demos.
@@ -58,25 +58,23 @@ PLANNED IMPROVEMENTS:
     Add other CloudWatch Resources.
     Add ElasiCache Resources.
     Automatically personalize the index.html page using AWS Lambda.
-
-  More Validation:
+  
+  - More Validation:
     Add an AllowedPattern for OwnedDomainName.
     Add an AllowedPattern for OwnedHostedZoneId.
     Check if the requested AZ count exceeds the region AZ count.
 
-  Transition from Deprecated Functionality:
+  - Transition from Deprecated Functionality:
     Remove ForwardedValues from CloudFront resources for CachePolicyId.
 
-  Security Improvements:
+  - Security Improvements:
     Tighten the S3 Endpoint Policy.
     Add WAF.
 
-  Remove Manual Processes:
-    Automatically empty the S3 bucket on stack deletion:
-      from Ken Krueger (privately):    3:18 PM
-      Harrison - take a look at the custom resource in this template, specifically lines 256-258.  https://github.com/kennyk65/aws-teaching-demos/blob/master/cloud-formation-    demos/slot-machine-website.template.yml
+  - Remove Manual Processes:
+    Automatically empty the S3 bucket on stack deletion.
     Automatically delete the ACM DNS validation Route 53 record on stack deletion.
     Automatically unpack static website resources into the S3 bucket with a Lambda function.
 
-  Remove Redundancy:
+  - Remove Redundancy:
     Consolidate CloudFront Distributions.
