@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-#Version 1.0. Last updated: 2021-06-22.
+#Version 1.1. Last updated: 2021-06-29.
 Description: Harrison Sherwin course demos template.
 Parameters: #Variable Inputs
 #Networking Parameters  
@@ -977,6 +977,22 @@ Resources:
               - 's3:*'
             Resource:
               - '*'
+#Cloud9
+  cloud9instance:
+    Type: AWS::Cloud9::EnvironmentEC2
+    Properties: 
+      AutomaticStopTimeMinutes: 240
+      ConnectionType: CONNECT_SSM
+      Description: IDE Shell for Demos
+      ImageId: amazonlinux-2-x86_64
+      InstanceType: t2.micro
+      Name: !Sub ${AWS::StackName}-Cloud9
+      #OwnerArn: String #Defaults to Creator
+      SubnetId:
+        Fn::If:
+          - BuildMoreThanOneAZ
+          - Ref: privateSubnetA
+          - Ref: publicSubnetA
 Outputs:
   mainALBdns:
     Description: Main ALB DNS Endpoint
