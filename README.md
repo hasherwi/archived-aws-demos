@@ -31,10 +31,6 @@ KNOWN ISSUES:
     ---Workaround 1: Request a service quota increase before deployment.
     ---Workaround 2: Deploy fewer NAT Gateways.
     ---Planned Resolution: Construct a Lambda function to check if deployment will result in a service quota violation, and if so, request the increase via the AWS API.
-
-RELEASE NOTES:
-  - Version 1.0, 22 June 2021:
-    Initial Release.
     
 PLANNED IMPROVEMENTS:
   - More Functionality:
@@ -53,7 +49,6 @@ PLANNED IMPROVEMENTS:
     Add SNS demos.
     Add Auto Scaling Group Policies.
     Add LB functionality when using only one AZ.
-    Add Cloud9 Resources.
     Add VPC Flow Logs.
     Add other CloudWatch Resources.
     Add ElasiCache Resources.
@@ -78,3 +73,10 @@ PLANNED IMPROVEMENTS:
 
   - Remove Redundancy:
     Consolidate CloudFront Distributions.
+    
+RELEASE NOTES:
+  - Version 1.1, 29 June 2021:
+    Bug Fix where lb-cache subdomain was unusable.
+    Added Cloud9 Instance deployment.
+  - Version 1.0, 22 June 2021:
+    Initial Release.
