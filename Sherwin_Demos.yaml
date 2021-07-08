@@ -1,11 +1,18 @@
 AWSTemplateFormatVersion: "2010-09-09"
-#Version 1.1. Last updated: 2021-06-29.
+#Version 1.2.
 Description: Harrison Sherwin course demos template.
 Parameters: #Variable Inputs
-#Networking Parameters  
+#Networking Parameters
   MainCidrBlock:
     Type: String
     Default: 10.0.0.0/16
+    Description: It will be divided into subnets.
+    ConstraintDescription: Minimum size is /24 (supports up to 16 subnets). Maximum size is /16.
+    #This enforces that IPv4 patterns are used and that they use /16 to /24 ranges.
+    AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/(1[6-9]|2[0-4])'
+  SecondCidrBlock:
+    Type: String
+    Default: 10.1.0.0/16
     Description: It will be divided into subnets.
     ConstraintDescription: Minimum size is /24 (supports up to 16 subnets). Maximum size is /16.
     #This enforces that IPv4 patterns are used and that they use /16 to /24 ranges.
@@ -27,7 +34,7 @@ Parameters: #Variable Inputs
   OwnedDomainName:
     Type: String
     Default: none
-    Description: A domain name that you own. Type "none" to not use one.
+    Description: A domain name that you own. Type "none" to not use one. Do not end with a trailing dot.
     MinLength: 4
     MaxLength: 255
   OwnedHostedZoneId:
@@ -47,26 +54,29 @@ Parameters: #Variable Inputs
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
     Description: Read more at docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html#using-systems-manager-parameter-to-find-AMI
 Metadata:
-  AWS::CloudFormation::Interface: 
-    ParameterGroups: 
-      - Label: 
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
           default: "Network Configuration"
-        Parameters: 
+        Parameters:
           - NumberOfAZs
           - MainCidrBlock
+          - SecondCidrBlock
           - NumberOfNATs
           - OwnedDomainName
           - OwnedHostedZoneId
-      - Label: 
+      - Label:
           default: "EC2 Configuration"
-        Parameters: 
+        Parameters:
           - InitialWebServerCapacity
           - RootInstanceAMI
-    ParameterLabels: 
+    ParameterLabels:
       NumberOfAZs:
         default: "How many AZs should infrastructure span across?"
-      MainCidrBlock: 
+      MainCidrBlock:
         default: "What IPv4 CIDR block will be used by the main VPC?"
+      SecondCidrBlock:
+        default: "What IPv4 CIDR block will be used by the second VPC?"
       NumberOfNATs:
         default: "How many NAT Gateways should be deployed?"
       OwnedDomainName:
@@ -93,10 +103,10 @@ Conditions:
   BuildSixthNAT:  !Equals [ !Ref NumberOfNATs, 6 ]
   NoDomain: !Equals [ !Ref OwnedDomainName, "none" ]
   BuildDomain: !Not [ !Equals [ !Ref OwnedDomainName, "none" ] ]
-  BuildDomainAndMultiAZ: !And 
+  BuildDomainAndMultiAZ: !And
     - !Condition BuildMoreThanOneAZ
     - !Condition BuildDomain
-  BuildMultiAZButNoDomain: !And 
+  BuildMultiAZButNoDomain: !And
     - !Condition BuildMoreThanOneAZ
     - !Condition NoDomain
 Resources:
@@ -109,6 +119,13 @@ Resources:
       Tags:
        - Key: Name
          Value: !Sub ${AWS::StackName}-Main-VPC
+  secondVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref SecondCidrBlock
+      Tags:
+       - Key: Name
+         Value: !Sub ${AWS::StackName}-Second-VPC
   #mainVPC Components
   mainIGW:
     Type: AWS::EC2::InternetGateway
@@ -154,7 +171,7 @@ Resources:
       SubnetId: !Ref publicSubnetA
   publicSubnetB:
     Type: AWS::EC2::Subnet
-    Condition: BuildSecondAZ
+    Condition: BuildSecondNAT
     Properties:
       CidrBlock: !Select [ 1, !Cidr [ !GetAtt mainVPC.CidrBlock, 16, 4 ] ]
       VpcId: !Ref mainVPC
@@ -165,13 +182,13 @@ Resources:
          Value: !Sub ${AWS::StackName}-Public-Subnet-B
   publicSubnetBrtb:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: BuildSecondAZ
+    Condition: BuildSecondNAT
     Properties:
       RouteTableId: !Ref publicRTB
       SubnetId: !Ref publicSubnetB
   publicSubnetC:
     Type: AWS::EC2::Subnet
-    Condition: BuildThirdAZ
+    Condition: BuildThirdNAT
     Properties:
       CidrBlock: !Select [ 2, !Cidr [ !GetAtt mainVPC.CidrBlock, 16, 4 ] ]
       VpcId: !Ref mainVPC
@@ -182,13 +199,13 @@ Resources:
          Value: !Sub ${AWS::StackName}-Public-Subnet-C
   publicSubnetCrtb:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: BuildThirdAZ
+    Condition: BuildThirdNAT
     Properties:
       RouteTableId: !Ref publicRTB
       SubnetId: !Ref publicSubnetC
   publicSubnetD:
     Type: AWS::EC2::Subnet
-    Condition: BuildFourthAZ
+    Condition: BuildFourthNAT
     Properties:
       CidrBlock: !Select [ 3, !Cidr [ !GetAtt mainVPC.CidrBlock, 16, 4 ] ]
       VpcId: !Ref mainVPC
@@ -199,13 +216,13 @@ Resources:
          Value: !Sub ${AWS::StackName}-Public-Subnet-D
   publicSubnetDrtb:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: BuildFourthAZ
+    Condition: BuildFourthNAT
     Properties:
       RouteTableId: !Ref publicRTB
       SubnetId: !Ref publicSubnetD
   publicSubnetE:
     Type: AWS::EC2::Subnet
-    Condition: BuildFifthAZ
+    Condition: BuildFifthNAT
     Properties:
       CidrBlock: !Select [ 4, !Cidr [ !GetAtt mainVPC.CidrBlock, 16, 4 ] ]
       VpcId: !Ref mainVPC
@@ -216,13 +233,13 @@ Resources:
          Value: !Sub ${AWS::StackName}-Public-Subnet-E
   publicSubnetErtb:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: BuildFifthAZ
+    Condition: BuildFifthNAT
     Properties:
       RouteTableId: !Ref publicRTB
       SubnetId: !Ref publicSubnetE
   publicSubnetF:
     Type: AWS::EC2::Subnet
-    Condition: BuildSixthAZ
+    Condition: BuildSixthNAT
     Properties:
       CidrBlock: !Select [ 5, !Cidr [ !GetAtt mainVPC.CidrBlock, 16, 4 ] ]
       VpcId: !Ref mainVPC
@@ -233,7 +250,7 @@ Resources:
          Value: !Sub ${AWS::StackName}-Public-Subnet-F
   publicSubnetFrtb:
     Type: AWS::EC2::SubnetRouteTableAssociation
-    Condition: BuildSixthAZ
+    Condition: BuildSixthNAT
     Properties:
       RouteTableId: !Ref publicRTB
       SubnetId: !Ref publicSubnetF
@@ -388,7 +405,7 @@ Resources:
     Properties:
       RouteTableId:
         !If [ BuildSixthNAT, !Ref privateRTBf, !If [ BuildThirdNAT, !Ref privateRTBc, !If [ BuildSecondNAT, !Ref privateRTBb, !Ref privateRTBa ] ] ]
-      SubnetId: !Ref privateSubnetD
+      SubnetId: !Ref privateSubnetF
   #NAT Elastic IPs
     #EIP default limit of 5 is a known issue. Only known resolution would be to create a Lambda function to check the limit and make the increase.
   NATaEIP:
@@ -674,23 +691,23 @@ Resources:
       Subnets:
         - !Ref publicSubnetA
         - Fn::If:
-          - BuildSecondAZ
+          - BuildSecondNAT
           - Ref: publicSubnetB
           - Ref: AWS::NoValue
         - Fn::If:
-          - BuildThirdAZ
+          - BuildThirdNAT
           - Ref: publicSubnetC
           - Ref: AWS::NoValue
         - Fn::If:
-          - BuildFourthAZ
+          - BuildFourthNAT
           - Ref: publicSubnetD
           - Ref: AWS::NoValue
         - Fn::If:
-          - BuildFifthAZ
+          - BuildFifthNAT
           - Ref: publicSubnetE
           - Ref: AWS::NoValue
         - Fn::If:
-          - BuildSixthAZ
+          - BuildSixthNAT
           - Ref: publicSubnetF
           - Ref: AWS::NoValue
     DependsOn:
@@ -752,7 +769,7 @@ Resources:
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           #CachePolicyId should be used instead of ForwardedValues, but CachePolicyId's can't be created by CloudFront directly. This is a future improvement. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-defaultcachebehavior.html
-          ForwardedValues: 
+          ForwardedValues:
             QueryString: False
           Compress: True
           TargetOriginId: s3Origin
@@ -779,7 +796,7 @@ Resources:
           SslSupportMethod: sni-only
         DefaultCacheBehavior:
           #CachePolicyId should be used instead of ForwardedValues, but CachePolicyId's can't be created by CloudFront directly. This is a future improvement. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-defaultcachebehavior.html
-          ForwardedValues: 
+          ForwardedValues:
             QueryString: False
           Compress: True
           TargetOriginId: albOrigin
@@ -800,7 +817,7 @@ Resources:
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           #CachePolicyId should be used instead of ForwardedValues, but CachePolicyId's can't be created by CloudFront directly. This is a future improvement. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-defaultcachebehavior.html
-          ForwardedValues: 
+          ForwardedValues:
             QueryString: False
           Compress: True
           TargetOriginId: s3Origin
@@ -820,7 +837,7 @@ Resources:
         Enabled: True
         DefaultCacheBehavior:
           #CachePolicyId should be used instead of ForwardedValues, but CachePolicyId's can't be created by CloudFront directly. This is a future improvement. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-defaultcachebehavior.html
-          ForwardedValues: 
+          ForwardedValues:
             QueryString: False
           Compress: True
           TargetOriginId: albOrigin
@@ -842,7 +859,7 @@ Resources:
   wildCertificate:
     Type: AWS::CertificateManager::Certificate
     Condition: BuildDomain
-    Properties: 
+    Properties:
       DomainName:
         Fn::Sub:
           - "*.${Domain}"
@@ -911,7 +928,10 @@ Resources:
 #S3 Resources
   mainS3Bucket:
     Type: AWS::S3::Bucket #The bucket name will be generated automatically.
-    DeletionPolicy: Retain
+    #TODO DeletionPolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
   mainS3BucketPolicy:
     #This policy has no directly public facing components.
     Type: AWS::S3::BucketPolicy
@@ -977,22 +997,168 @@ Resources:
               - 's3:*'
             Resource:
               - '*'
-#Cloud9
-  cloud9instance:
-    Type: AWS::Cloud9::EnvironmentEC2
-    Properties: 
-      AutomaticStopTimeMinutes: 240
-      ConnectionType: CONNECT_SSM
-      Description: IDE Shell for Demos
-      ImageId: amazonlinux-2-x86_64
-      InstanceType: t2.micro
-      Name: !Sub ${AWS::StackName}-Cloud9
-      #OwnerArn: String #Defaults to Creator
-      SubnetId:
-        Fn::If:
-          - BuildMoreThanOneAZ
-          - Ref: privateSubnetA
-          - Ref: publicSubnetA
+  cleanupBucket:
+    #Source: https://gist.github.com/drumadrian/e1601ab34e7f609b5075f65599108960
+    DependsOn: cleanupBucketLambda
+    Type: Custom::cleanupBucket
+    Properties:
+      ServiceToken:
+        !GetAtt cleanupBucketLambda.Arn
+      BucketName: !Ref mainS3Bucket
+  cleanupBucketLambda:
+    #Source: https://gist.github.com/drumadrian/e1601ab34e7f609b5075f65599108960
+    DependsOn: mainS3Bucket
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: !Sub |
+          #!/usr/bin/env python
+          # -*- coding: utf-8 -*-
+          import json
+          import boto3
+          from botocore.vendored import requests
+          def empty_delete_buckets(bucket_name):
+              """
+              Empties and deletes the bucket
+              :param bucket_name:
+              :param region:
+              :return:
+              """
+              print "trying to delete the bucket {0}".format(bucket_name)
+              # s3_client = SESSION.client('s3', region_name=region)
+              s3_client = boto3.client('s3')
+              # s3 = SESSION.resource('s3', region_name=region)
+              s3 = boto3.resource('s3')
+              try:
+                  bucket = s3.Bucket(bucket_name).load()
+              except ClientError:
+                  print "bucket {0} does not exist".format(bucket_name)
+                  return
+              # Check if versioning is enabled
+              response = s3_client.get_bucket_versioning(Bucket=bucket_name)
+              status = response.get('Status','')
+              if status == 'Enabled':
+                  response = s3_client.put_bucket_versioning(Bucket=bucket_name,
+                                                             VersioningConfiguration={'Status': 'Suspended'})
+              paginator = s3_client.get_paginator('list_object_versions')
+              page_iterator = paginator.paginate(
+                  Bucket=bucket_name
+              )
+              for page in page_iterator:
+                  print page
+                  if 'DeleteMarkers' in page:
+                      delete_markers = page['DeleteMarkers']
+                      if delete_markers is not None:
+                          for delete_marker in delete_markers:
+                              key = delete_marker['Key']
+                              versionId = delete_marker['VersionId']
+                              s3_client.delete_object(Bucket=bucket_name, Key=key, VersionId=versionId)
+                  if 'Versions' in page and page['Versions'] is not None:
+                      versions = page['Versions']
+                      for version in versions:
+                          print version
+                          key = version['Key']
+                          versionId = version['VersionId']
+                          s3_client.delete_object(Bucket=bucket_name, Key=key, VersionId=versionId)
+              object_paginator = s3_client.get_paginator('list_objects_v2')
+              page_iterator = object_paginator.paginate(
+                  Bucket=bucket_name
+              )
+              for page in page_iterator:
+                  if 'Contents' in page:
+                      for content in page['Contents']:
+                          key = content['Key']
+                          s3_client.delete_object(Bucket=bucket_name, Key=content['Key'])
+              #UNCOMMENT THE LINE BELOW TO MAKE LAMBDA DELETE THE BUCKET.
+              # THIS WILL CAUSE AN FAILURE SINCE CLOUDFORMATION ALSO TRIES TO DELETE THE BUCKET
+              #s3_client.delete_bucket(Bucket=bucket_name)
+              #print "Successfully deleted the bucket {0}".format(bucket_name)
+              print "Successfully emptied the bucket {0}".format(bucket_name)
+          def lambda_handler(event, context):
+              try:
+                  bucket = event['ResourceProperties']['BucketName']
+                  if event['RequestType'] == 'Delete':
+                      empty_delete_buckets(bucket)
+                      #s3 = boto3.resource('s3')
+                      #bucket.objects.all().delete()
+                      #bucket = s3.Bucket(bucket)
+                      #for obj in bucket.objects.filter():
+                          #s3.Object(bucket.name, obj.key).delete()
+                  sendResponseCfn(event, context, "SUCCESS")
+              except Exception as e:
+                  print(e)
+                  sendResponseCfn(event, context, "FAILED")
+          def sendResponseCfn(event, context, responseStatus):
+              response_body = {'Status': responseStatus,
+                               'Reason': 'Log stream name: ' + context.log_stream_name,
+                               'PhysicalResourceId': context.log_stream_name,
+                               'StackId': event['StackId'],
+                               'RequestId': event['RequestId'],
+                               'LogicalResourceId': event['LogicalResourceId'],
+                               'Data': json.loads("{}")}
+              requests.put(event['ResponseURL'], data=json.dumps(response_body))
+      Description: cleanup Bucket on Delete Lambda function.
+      FunctionName: !Sub ${AWS::StackName}-S3-Cleaner
+      Handler: index.lambda_handler
+      Role : !GetAtt cleanupBucketLambdaRole.Arn
+      Runtime: python2.7
+      Timeout: 60
+  cleanupBucketLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: !Sub ${AWS::StackName}-S3-Cleaner-Policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:*
+            - s3:*
+            Resource: '*'
+          - Effect: Deny
+            Action:
+            - s3:DeleteBucket
+            Resource: '*'
+#Database Resources
+  dynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${AWS::StackName}-Dynamo-Table
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: True
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: uuid
+          KeyType: HASH
+      AttributeDefinitions:
+        - AttributeName: uuid
+          AttributeType: S
+#Cloud9 (Removed Temporarily)
+  #cloud9instance:
+    #Type: AWS::Cloud9::EnvironmentEC2
+    #Properties:
+      #AutomaticStopTimeMinutes: 240
+      #ConnectionType: CONNECT_SSM
+      #Description: IDE Shell for Demos
+      #ImageId: amazonlinux-2-x86_64
+      #InstanceType: t2.micro
+      #Name: !Sub ${AWS::StackName}-Cloud9
+      #SubnetId:
+        #Fn::If:
+          #- BuildMoreThanOneAZ
+          #- Ref: privateSubnetA
+          #- Ref: publicSubnetA
 Outputs:
   mainALBdns:
     Description: Main ALB DNS Endpoint
@@ -1010,7 +1176,7 @@ Outputs:
       Name: !Sub ${AWS::StackName}-mainS3dns
   cloudfrontS3DistroDNS:
     Description: CloudFront Distribution DNS Endpoint for S3 Origin
-    Value: 
+    Value:
       Fn::If:
         - BuildDomain
         - !GetAtt cloudfrontS3DistroWithDomain.DomainName

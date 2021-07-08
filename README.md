@@ -31,10 +31,11 @@ KNOWN ISSUES:
     ---Workaround 1: Request a service quota increase before deployment.
     ---Workaround 2: Deploy fewer NAT Gateways.
     ---Planned Resolution: Construct a Lambda function to check if deployment will result in a service quota violation, and if so, request the increase via the AWS API.
-    
+
 PLANNED IMPROVEMENTS:
   - More Functionality:
-    Add resources for Transit Gateway demos.
+    Add Cloud9
+    Add cross-VPC TGW demo.
     Add Lambda demos.
     Add ECS/EKS/ECR/Fargate demos.
     Add API Gateway demos.
@@ -53,7 +54,7 @@ PLANNED IMPROVEMENTS:
     Add other CloudWatch Resources.
     Add ElasiCache Resources.
     Automatically personalize the index.html page using AWS Lambda.
-  
+
   - More Validation:
     Add an AllowedPattern for OwnedDomainName.
     Add an AllowedPattern for OwnedHostedZoneId.
@@ -65,16 +66,30 @@ PLANNED IMPROVEMENTS:
   - Security Improvements:
     Tighten the S3 Endpoint Policy.
     Add WAF.
+    Add a DynamoDB VPC Endpoint.
+
+  - Efficient Resource Usage:
+    Optimize CIDR block usage.
+    Consolidate CloudFront Distributions.
 
   - Remove Manual Processes:
-    Automatically empty the S3 bucket on stack deletion.
     Automatically delete the ACM DNS validation Route 53 record on stack deletion.
     Automatically unpack static website resources into the S3 bucket with a Lambda function.
 
-  - Remove Redundancy:
-    Consolidate CloudFront Distributions.
-    
+  - More User Choice:
+    Add Secondary VPC deployment choice.
+
 RELEASE NOTES:
+  - Version 1.2, XX July 2021:
+    Removed Cloud9 instance temporarily.
+    Added resources to empty (and allowing deletion of) the S3 bucket on stack deletion.
+      Source: https://gist.github.com/drumadrian/e1601ab34e7f609b5075f65599108960
+    Added Second VPC for future use.
+    Added DynamoDB table for future use.
+    Enabled Versioning for the S3 Bucket.
+    Trimmed all trailing whitespace.
+    Resolved Issue where the wrong Route Table was associated with Private Subnet F.
+    Swapped Public Subnet B through F creation to be based on NAT count and not AZ count. So resources are no longer created unnecessarily. Modified downstream dependencies as needed.
   - Version 1.1, 29 June 2021:
     Bug Fix where lb-cache subdomain was unusable.
     Added Cloud9 Instance deployment.
