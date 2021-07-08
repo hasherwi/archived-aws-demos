@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-#Version 1.2.
+#Version 1.3.
 Description: Harrison Sherwin course demos template.
 Parameters: #Variable Inputs
 #Networking Parameters

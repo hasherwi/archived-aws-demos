@@ -80,6 +80,8 @@ PLANNED IMPROVEMENTS:
     Add Secondary VPC deployment choice.
 
 RELEASE NOTES:
+  - Version 1.3, XX July 2021:
+    #TODO
   - Version 1.2, 07 July 2021:
     Removed Cloud9 instance temporarily.
     Added resources to empty (and allowing deletion of) the S3 bucket on stack deletion.
