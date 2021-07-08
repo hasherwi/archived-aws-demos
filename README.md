@@ -66,7 +66,6 @@ PLANNED IMPROVEMENTS:
   - Security Improvements:
     Tighten the S3 Endpoint Policy.
     Add WAF.
-    Add a DynamoDB VPC Endpoint.
 
   - Efficient Resource Usage:
     Optimize CIDR block usage.
@@ -81,7 +80,8 @@ PLANNED IMPROVEMENTS:
 
 RELEASE NOTES:
   - Version 1.3, XX July 2021:
-    #TODO
+    Added DynamoDB VPC Interface Endpoint.
+    Simplified S3 Cleanup Lambda Function to remove unnecessary code.
   - Version 1.2, 07 July 2021:
     Removed Cloud9 instance temporarily.
     Added resources to empty (and allowing deletion of) the S3 bucket on stack deletion.
