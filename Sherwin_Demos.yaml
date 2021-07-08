@@ -31,6 +31,7 @@ Parameters: #Variable Inputs
     ConstraintDescription: Minimum of 1. Maximum of 6. Don't exceed the number of AZs selected. Not used with 1 AZ. EIP limits on your account should be considered.
     MinValue: 1
     MaxValue: 6
+#Domain Parameters
   OwnedDomainName:
     Type: String
     Default: none
@@ -53,6 +54,11 @@ Parameters: #Variable Inputs
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
     Description: Read more at docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html#using-systems-manager-parameter-to-find-AMI
+#Other Parameters
+  SNSemail:
+    Type: String
+    Default: hasherwi@amazon.com
+    Description: The email address that you want to receive notifications to for SNS demos. Enter "none" to skip.
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -70,9 +76,13 @@ Metadata:
         Parameters:
           - InitialWebServerCapacity
           - RootInstanceAMI
+      - Label:
+          default: "Other Configuration"
+        Parameters:
+          - SNSemail
     ParameterLabels:
       NumberOfAZs:
-        default: "How many AZs should infrastructure span across?"
+        default: "How many AZs should the infrastructure span across?"
       MainCidrBlock:
         default: "What IPv4 CIDR block will be used by the main VPC?"
       SecondCidrBlock:
@@ -87,6 +97,8 @@ Metadata:
         default: "How many web servers should be deployed?"
       RootInstanceAMI:
         default: "Which EC2 AMI SSM Parameter should be used?"
+      SNSemail:
+        default: "What email address do you want to receive notifications to?"
 Conditions:
   #If only one AZ is requested, an ALB is not deployed and the ASG deploys web servers into the Public Subnet, removing the need for NAT instances as well.
   BuildOnlyOneAZ: !Equals [ !Ref NumberOfAZs, 1 ]
@@ -109,6 +121,7 @@ Conditions:
   BuildMultiAZButNoDomain: !And
     - !Condition BuildMoreThanOneAZ
     - !Condition NoDomain
+  BuildSNS: !Not [ !Equals [ !Ref SNSemail, "none" ] ]
 Resources:
 #Networking Resources
   #VPCs
@@ -1171,6 +1184,15 @@ Resources:
               - 'dynamodb:*'
             Resource:
               - '*'
+#Messaging Resources
+  s3ObjectPutTopic:
+    Condition: BuildSNS
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub ${AWS::StackName}-S3-Object-Puts-Topic
+      Subscription:
+        - Endpoint: !Ref SNSemail
+          Protocol: email
 #Cloud9 (Removed Temporarily)
   #cloud9instance:
     #Type: AWS::Cloud9::EnvironmentEC2

@@ -19,18 +19,23 @@ DEPLOYMENT STEPS:
     AWS CLI Command Example With Domain Deployment:
       aws cloudformation deploy --template-file C:\Users\hasherwi\Downloads\Sherwin_TIPS_Demo\Sherwin_Demos.yaml --stack-name tips-demo --capabilities CAPABILITY_NAMED_IAM --region us-east-1 --parameter-overrides NumberOfAZs=2 NumberOfNATs=2 OwnedDomainName="hsherwin.com" OwnedHostedZoneId="Z0687820MAF0GNYEQVR8" InitialWebServerCapacity=4
   2. (Optional) Add static web components to the auto-generated S3 bucket.
+  3. (Optional) Confirm the SNS email, if an email address was provided.
 
 KNOWN ISSUES:
   - Removing AZs during stack modification can fail to delete public subnets related to ALB ENIs.
-    ---No workaround known, manually delete the ALB.
+    --No workaround known, manually delete the ALB.
 
   - When using a domain, a hosted zone is required to already exist and the stack must be deployed to us-east-1. These are the only current dependencies because domains purchased outside of Route 53 require advance notice of name server configurations.
-    ---No workaround, create the hosted zone before stack deployment.
+    --No workaround, create the hosted zone before stack deployment.
 
-  - A common limit that can halt deployment are Elastic IPs. By default, every account has a limit of 5 EIPs per region.
-    ---Workaround 1: Request a service quota increase before deployment.
-    ---Workaround 2: Deploy fewer NAT Gateways.
-    ---Planned Resolution: Construct a Lambda function to check if deployment will result in a service quota violation, and if so, request the increase via the AWS API.
+  - A common limit that can halt deployment is Elastic IPs. By default, every account has a limit of 5 EIPs per region.
+    --Workaround 1: Request a service quota increase before deployment.
+    --Workaround 2: Deploy fewer NAT Gateways.
+    --Planned Resolution: Construct a Lambda function to check if deployment will result in a service quota violation, and if so, request the increase via the AWS API.
+    
+  - Selecting more AZs than exist in the region will result in a stack failure with the following error, where # is replaced with the number of AZs available:
+    --Template error: Fn::Select cannot select nonexistent value at index #
+    --No known workaround.
 
 PLANNED IMPROVEMENTS:
   - More Functionality:
@@ -58,13 +63,16 @@ PLANNED IMPROVEMENTS:
   - More Validation:
     Add an AllowedPattern for OwnedDomainName.
     Add an AllowedPattern for OwnedHostedZoneId.
+    Add an AllowedPattern for SNSemail.
     Check if the requested AZ count exceeds the region AZ count.
 
   - Transition from Deprecated Functionality:
     Remove ForwardedValues from CloudFront resources for CachePolicyId.
 
   - Security Improvements:
-    Tighten the S3 Endpoint Policy.
+    Tighten the S3 and DynamoDB Endpoint Policies.
+    Tighten the S3 Cleaner Lambda Policies.
+    Tighten the S3 bucket policies to only allow CloudFront to get certain extensions.
     Add WAF.
 
   - Efficient Resource Usage:
@@ -80,8 +88,10 @@ PLANNED IMPROVEMENTS:
 
 RELEASE NOTES:
   - Version 1.3, XX July 2021:
+    Added SNS Topic for future use.
     Added DynamoDB VPC Interface Endpoint.
     Simplified S3 Cleanup Lambda Function to remove unnecessary code.
+    Metadata grammar edits.
   - Version 1.2, 07 July 2021:
     Removed Cloud9 instance temporarily.
     Added resources to empty (and allowing deletion of) the S3 bucket on stack deletion.
