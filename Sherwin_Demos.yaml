@@ -928,7 +928,6 @@ Resources:
 #S3 Resources
   mainS3Bucket:
     Type: AWS::S3::Bucket #The bucket name will be generated automatically.
-    #TODO DeletionPolicy: Retain
     Properties:
       VersioningConfiguration:
         Status: Enabled
