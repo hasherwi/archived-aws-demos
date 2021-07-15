@@ -1,7 +1,7 @@
 # aws-demos
-https://github.com/hasherwi/aws-demos/blob/main/README.md
 
-THIS IS AN AWS CLOUDFORMATION YAML TEMPLATE FOR DEPLOYING AN END-TO-END WEB SERVER ARCHITECTURE ON AWS. IT IS INTENDED TO BE USED PURELY FOR TECHNICAL TRAINING AND SELF-LEARNING PURPOSES.
+This is a package of demo resources for use in AWS training courses. It includes an AWS CloudFormation YAML template, demo scripts, this readme, the original presentation for its debut, and auxillary demo files. Multiple demos are wrapped together. 
+
 by Harrison Sherwin (hasherwi@amazon.com)
 
 First, see my presentation here that's also in this package (Sherwin_Demos_Presentation.pptx).
@@ -85,12 +85,31 @@ PLANNED IMPROVEMENTS:
 
   - More User Choice:
     Add Secondary VPC deployment choice.
+    Add choice on email/SNS.
 
 RELEASE NOTES:
   - Version 1.3, XX July 2021:
-    Added SNS Topic for future use.
+    Added Python SDK demos' source code for use with EC2 and DynamoDB.
+      #TODO: Test EC2 code.
+      #TODO: Test create_table code.
+    Added demo script: S3 CLI.
+      #TODO: Finish it.
+    Readded Cloud9 installation.
+      It now uses SSH and the public subnet.
+      #TODO: Test it.
+      #TODO: Route table changes to support it being in public Subnet.
+    #TODO: Cert for ALB
+    Added ElastiCache demo components.
+      Added pip installation to EC2 instances user data.
+      #TODO: Cluster resource.
+      #TODO: Demo script.
+      #TODO: Subnet group.
+      #TODO: Test it.
+      #TODO: Security group.
+    #TODO: Redirect HTTP to HTTPS.
     Added DynamoDB VPC Interface Endpoint.
     Simplified S3 Cleanup Lambda Function to remove unnecessary code.
+    Additional inline template documentation.
     Metadata grammar edits.
   - Version 1.2, 07 July 2021:
     Removed Cloud9 instance temporarily.

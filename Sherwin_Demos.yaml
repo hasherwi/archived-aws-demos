@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 #Version 1.3.
-Description: Harrison Sherwin course demos template.
+Description: Harrison Sherwin course demos template
 Parameters: #Variable Inputs
 #Networking Parameters
   MainCidrBlock:
@@ -53,12 +53,8 @@ Parameters: #Variable Inputs
   RootInstanceAMI:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+      #https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/amazon-linux-ami-basics.html
     Description: Read more at docs.aws.amazon.com/AWSEC2/latest/UserGuide/finding-an-ami.html#using-systems-manager-parameter-to-find-AMI
-#Other Parameters
-  SNSemail:
-    Type: String
-    Default: hasherwi@amazon.com
-    Description: The email address that you want to receive notifications to for SNS demos. Enter "none" to skip.
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -76,10 +72,6 @@ Metadata:
         Parameters:
           - InitialWebServerCapacity
           - RootInstanceAMI
-      - Label:
-          default: "Other Configuration"
-        Parameters:
-          - SNSemail
     ParameterLabels:
       NumberOfAZs:
         default: "How many AZs should the infrastructure span across?"
@@ -97,8 +89,6 @@ Metadata:
         default: "How many web servers should be deployed?"
       RootInstanceAMI:
         default: "Which EC2 AMI SSM Parameter should be used?"
-      SNSemail:
-        default: "What email address do you want to receive notifications to?"
 Conditions:
   #If only one AZ is requested, an ALB is not deployed and the ASG deploys web servers into the Public Subnet, removing the need for NAT instances as well.
   BuildOnlyOneAZ: !Equals [ !Ref NumberOfAZs, 1 ]
@@ -121,7 +111,6 @@ Conditions:
   BuildMultiAZButNoDomain: !And
     - !Condition BuildMoreThanOneAZ
     - !Condition NoDomain
-  BuildSNS: !Not [ !Equals [ !Ref SNSemail, "none" ] ]
 Resources:
 #Networking Resources
   #VPCs
@@ -402,7 +391,6 @@ Resources:
     Properties:
       RouteTableId:
         !If [ BuildFifthNAT, !Ref privateRTBe, !Ref privateRTBa ]
-        #Nest me.
       SubnetId: !Ref privateSubnetE
   privateRTBf:
     Type: AWS::EC2::RouteTable
@@ -592,7 +580,8 @@ Resources:
               package_update: true
               package_upgrade: true
               packages:
-                - httpd
+                - httpd #Apache HTTP Server https://httpd.apache.org/docs/
+                - pip   #Package Installer for Python (Used with ElastiCache demo) https://pip.pypa.io/en/stable/
               runcmd:
                 - echo 'I finished attempting updates and package installs.'
                 - sudo touch /var/www/html/index.html
@@ -1184,30 +1173,18 @@ Resources:
               - 'dynamodb:*'
             Resource:
               - '*'
-#Messaging Resources
-  s3ObjectPutTopic:
-    Condition: BuildSNS
-    Type: AWS::SNS::Topic
+#Cloud9
+  cloud9instance:
+    Type: AWS::Cloud9::EnvironmentEC2
     Properties:
-      TopicName: !Sub ${AWS::StackName}-S3-Object-Puts-Topic
-      Subscription:
-        - Endpoint: !Ref SNSemail
-          Protocol: email
-#Cloud9 (Removed Temporarily)
-  #cloud9instance:
-    #Type: AWS::Cloud9::EnvironmentEC2
-    #Properties:
-      #AutomaticStopTimeMinutes: 240
-      #ConnectionType: CONNECT_SSM
-      #Description: IDE Shell for Demos
-      #ImageId: amazonlinux-2-x86_64
-      #InstanceType: t2.micro
-      #Name: !Sub ${AWS::StackName}-Cloud9
-      #SubnetId:
-        #Fn::If:
-          #- BuildMoreThanOneAZ
-          #- Ref: privateSubnetA
-          #- Ref: publicSubnetA
+      AutomaticStopTimeMinutes: 240
+      ConnectionType: CONNECT_SSH
+      Description: IDE Shell for Demos
+      ImageId: amazonlinux-2-x86_64
+      InstanceType: t2.micro
+      Name: !Sub ${AWS::StackName}-Cloud9
+      SubnetId: !Ref publicSubnetA
+#ElastiCache Resources
 Outputs:
   mainALBdns:
     Description: Main ALB DNS Endpoint

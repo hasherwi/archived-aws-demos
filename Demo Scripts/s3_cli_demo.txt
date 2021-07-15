@@ -1,0 +1,20 @@
+S3 CLI Demo
+
+Demonstrates:
+  S3 Endpoint (to avoid public bucket access)
+  cURL an Object
+  S3 Delete Markers
+  S3 Versioning
+  CLI: S3 versus S3api
+  
+Prerequistes:
+  S3 Bucket with Versioning Enabled
+  A simple text file that will cURL nicely
+  AWS CLI and cURL installed
+  EC2 instance (Possibly Cloud9) to use CLI from
+  Network access between the instance and S3api
+  
+Script:
+  Log in to the instance.
+  #TODO
+  
