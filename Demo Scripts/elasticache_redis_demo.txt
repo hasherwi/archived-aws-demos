@@ -1,0 +1,33 @@
+ElastiCache Redis Demo
+
+Demonstrates:
+  #TODO
+  
+Prerequistes:
+  #TODO
+  
+Script:
+  Log in to the instance.
+  #TODO
+  
+#NOTES
+  Show endpoint.
+  show security group.
+  //redis demo
+	//setup
+*sudo yum install python-pip -y
+*pip install redis --user
+	//demo start
+python
+import redis
+cache = redis.Redis(host='elasticache-demo.fuafpw.0001.use1.cache.amazonaws.com:6379', port=6379, db=0)
+cache.set('customer.1234.name', 'Harrison Sherwin')
+cache.get('customer.1234.name')
+cache.set('customer.1234.state', 'CO')
+cache.get('customer.1234.state')
+	//TTL
+cache.set('customer.5678.name', 'Jane Doe', 10)
+cache.get('customer.5678.name')
+	//Cleanup
+cache.delete('customer.1234.name')
+cache.delete('customer.1234.state')
