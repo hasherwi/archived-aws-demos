@@ -1236,7 +1236,7 @@ Resources:
         - !If [ BuildSixthAZ, !Ref privateSubnetF, !Ref AWS::NoValue ]
   elasticacheCluster:
     Type: AWS::ElastiCache::CacheCluster
-    Properties: 
+    Properties:
       CacheNodeType: cache.t2.micro
       CacheSubnetGroupName: !Ref elasticacheSubnetGroup
       ClusterName: !Sub ${AWS::StackName}-ElastiCache-Cluster
@@ -1245,7 +1245,7 @@ Resources:
       Port: 6379
       PreferredAvailabilityZone: !Select [ 0, !GetAZs ]
       PreferredMaintenanceWindow: sat:23:00-sun:01:30
-      VpcSecurityGroupIds: 
+      VpcSecurityGroupIds:
         - !GetAtt elasticacheSG.GroupId
 Outputs:
   mainALBdns:
@@ -1288,3 +1288,8 @@ Outputs:
         - "A CloudFront distribution for the ALB is not created when using one AZ."
     Export:
       Name: !Sub ${AWS::StackName}-cloudfrontLBDistro
+  redisClusterEndpoint:
+    Description: CloudFront Distribution DNS Endpoint for ALB Origin
+    Value: !GetAtt elasticacheCluster.RedisEndpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-redisClusterEndpoint

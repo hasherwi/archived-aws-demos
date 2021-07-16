@@ -99,6 +99,7 @@ RELEASE NOTES:
     Added ElastiCache demo components.
       Added pip and redis-py installation to EC2 instances user data.
       New ElastiCache cluster, EC2 security group and ElastiCache subnet group.
+      Output for cluster endpoint address.
       #TODO: Demo script: Author, test
     Now redirecting HTTP to HTTPS for CloudFront distributions.
     The web servers now support HTTPS when behind the ALB.
@@ -109,6 +110,7 @@ RELEASE NOTES:
     Simplified S3 Cleanup Lambda Function to remove unnecessary code.
     Added output for S3 bucket name.
       This is mostly a proof of concept for getting an auto-generated bucket's name.
+    Minor fix to EC2 user data to close HTML tags on index.html page.
     Additional inline template documentation.
     Metadata grammar edits.
   - Version 1.2, 07 July 2021:
