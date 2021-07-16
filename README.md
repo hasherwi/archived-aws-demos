@@ -97,25 +97,19 @@ RELEASE NOTES:
     Readded Cloud9 installation.
       It now uses SSH and the public subnet.
     Added ElastiCache demo components.
-      Added pip installation to EC2 instances user data.
-      #TODO: Cluster resource.
+      Added pip and redis-py installation to EC2 instances user data.
+      New ElastiCache cluster, EC2 security group and ElastiCache subnet group.
       #TODO: Demo script: Author, test
-      #TODO: Subnet group.
-      #TODO: Test it.
-      New Security group allowing traffic from web servers to ElastiCache cluster.
     Now redirecting HTTP to HTTPS for CloudFront distributions.
     The web servers now support HTTPS when behind the ALB.
-      Add mod_ssl installation to EC2 instance user data.
       Modified security groups to allow HTTPS traffic.
       Added an ALB listener for HTTPS traffic.
-      #TODO: Put the certificate on the web servers.
-      #TODO: Test it.
     #TODO: Update S3 assets for HTTPS.
     Added DynamoDB VPC Interface Endpoint.
     Simplified S3 Cleanup Lambda Function to remove unnecessary code.
     Added output for S3 bucket name.
       This is mostly a proof of concept for getting an auto-generated bucket's name.
-    #TODO: Additional inline template documentation.
+    Additional inline template documentation.
     Metadata grammar edits.
   - Version 1.2, 07 July 2021:
     Removed Cloud9 instance temporarily.

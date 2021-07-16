@@ -592,11 +592,14 @@ Resources:
                 - curl http://169.254.169.254/latest/meta-data/instance-type >> /var/www/html/index.html
                 - echo ' instance in the ' >> /var/www/html/index.html
                 - curl http://169.254.169.254/latest/meta-data/placement/availability-zone >> /var/www/html/index.html
-                - echo ' AZ.' >> /var/www/html/index.html
+                - echo ' AZ.</h2></body></html>' >> /var/www/html/index.html
                 - echo 'I created the webpage.'
                 #Web Server Configuration
                 - sudo chkconfig httpd on
                 - echo 'I configured the web server to start on boot.'
+                #Redis-py Installation
+                - pip install redis #https://pypi.org/project/redis/
+                - echo 'I installed Redis with pip.'
               power_state:
                 mode: reboot  #This is done to make sure updates are installed.
                 message: Rebooting per CloudInit
@@ -1219,6 +1222,31 @@ Resources:
           FromPort: 6379  #Default Redis Port
           ToPort: 6379
           IpProtocol: tcp
+  elasticacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      CacheSubnetGroupName: !Sub ${AWS::StackName}-ElastiCache-Subnet-Group
+      Description: Subnet Group for !Sub ${AWS::StackName} ElastiCache Cluster
+      SubnetIds:
+        - !If [ BuildMoreThanOneAZ, !Ref privateSubnetA, !Ref publicSubnetA ]
+        - !If [ BuildSecondAZ, !Ref privateSubnetB, !Ref AWS::NoValue ]
+        - !If [ BuildThirdAZ, !Ref privateSubnetC, !Ref AWS::NoValue ]
+        - !If [ BuildFourthAZ, !Ref privateSubnetD, !Ref AWS::NoValue ]
+        - !If [ BuildFifthAZ, !Ref privateSubnetE, !Ref AWS::NoValue ]
+        - !If [ BuildSixthAZ, !Ref privateSubnetF, !Ref AWS::NoValue ]
+  elasticacheCluster:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties: 
+      CacheNodeType: cache.t2.micro
+      CacheSubnetGroupName: !Ref elasticacheSubnetGroup
+      ClusterName: !Sub ${AWS::StackName}-ElastiCache-Cluster
+      Engine: redis
+      NumCacheNodes: 1
+      Port: 6379
+      PreferredAvailabilityZone: !Select [ 0, !GetAZs ]
+      PreferredMaintenanceWindow: sat:23:00-sun:01:30
+      VpcSecurityGroupIds: 
+        - !GetAtt elasticacheSG.GroupId
 Outputs:
   mainALBdns:
     Description: Main ALB DNS Endpoint
