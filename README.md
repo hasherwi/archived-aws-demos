@@ -1,6 +1,6 @@
 # aws-demos
 
-This is a package of demo resources for use in AWS training courses. It includes an AWS CloudFormation YAML template, demo scripts, this readme, the original presentation for its debut, and auxillary demo files. Multiple demos are wrapped together. 
+This is a package of demo resources for use in AWS training courses. It includes an AWS CloudFormation YAML template, demo scripts, this readme, the original presentation for its debut, and auxillary demo files. Multiple demos are wrapped together.
 
 by Harrison Sherwin (hasherwi@amazon.com)
 
@@ -32,14 +32,13 @@ KNOWN ISSUES:
     --Workaround 1: Request a service quota increase before deployment.
     --Workaround 2: Deploy fewer NAT Gateways.
     --Planned Resolution: Construct a Lambda function to check if deployment will result in a service quota violation, and if so, request the increase via the AWS API.
-    
+
   - Selecting more AZs than exist in the region will result in a stack failure with the following error, where # is replaced with the number of AZs available:
     --Template error: Fn::Select cannot select nonexistent value at index #
     --No known workaround.
 
 PLANNED IMPROVEMENTS:
   - More Functionality:
-    Add Cloud9
     Add cross-VPC TGW demo.
     Add Lambda demos.
     Add ECS/EKS/ECR/Fargate demos.
@@ -54,26 +53,24 @@ PLANNED IMPROVEMENTS:
     Add more advanced ALB rules.
     Add SNS demos.
     Add Auto Scaling Group Policies.
-    Add LB functionality when using only one AZ.
+    Add LB functionality when using only one AZ, if possible.
     Add VPC Flow Logs.
     Add other CloudWatch Resources.
-    Add ElasiCache Resources.
     Automatically personalize the index.html page using AWS Lambda.
 
   - More Validation:
     Add an AllowedPattern for OwnedDomainName.
     Add an AllowedPattern for OwnedHostedZoneId.
-    Add an AllowedPattern for SNSemail.
     Check if the requested AZ count exceeds the region AZ count.
 
   - Transition from Deprecated Functionality:
     Remove ForwardedValues from CloudFront resources for CachePolicyId.
 
   - Security Improvements:
-    Tighten the S3 and DynamoDB Endpoint Policies.
     Tighten the S3 Cleaner Lambda Policies.
     Tighten the S3 bucket policies to only allow CloudFront to get certain extensions.
     Add WAF.
+    Tighten the wildcard certificates to specific subdomain certificates.
 
   - Efficient Resource Usage:
     Optimize CIDR block usage.
@@ -85,31 +82,40 @@ PLANNED IMPROVEMENTS:
 
   - More User Choice:
     Add Secondary VPC deployment choice.
-    Add choice on email/SNS.
+
+  - Other:
+    Use AWS::URLSuffix psuedo parameter where appropiate.
 
 RELEASE NOTES:
   - Version 1.3, XX July 2021:
-    Added Python SDK demos' source code for use with EC2 and DynamoDB.
-      #TODO: Test EC2 code.
-      #TODO: Test create_table code.
+    Added Python SDK demos for use with EC2 and DynamoDB.
+      #TODO: Test create_table code. Because it's failing. On EC2 because of instance profil.e On Cloud9 due to SessionToken in credentials.
+      #TODO: Expand with more data and scans/queries, then test.
     Added demo script: S3 CLI.
       #TODO: Finish it.
+      #TODO: Test it.
     Readded Cloud9 installation.
       It now uses SSH and the public subnet.
-      #TODO: Test it.
-      #TODO: Route table changes to support it being in public Subnet.
-    #TODO: Cert for ALB
     Added ElastiCache demo components.
       Added pip installation to EC2 instances user data.
       #TODO: Cluster resource.
-      #TODO: Demo script.
+      #TODO: Demo script: Author, test
       #TODO: Subnet group.
       #TODO: Test it.
-      #TODO: Security group.
-    #TODO: Redirect HTTP to HTTPS.
+      New Security group allowing traffic from web servers to ElastiCache cluster.
+    Now redirecting HTTP to HTTPS for CloudFront distributions.
+    The web servers now support HTTPS when behind the ALB.
+      Add mod_ssl installation to EC2 instance user data.
+      Modified security groups to allow HTTPS traffic.
+      Added an ALB listener for HTTPS traffic.
+      #TODO: Put the certificate on the web servers.
+      #TODO: Test it.
+    #TODO: Update S3 assets for HTTPS.
     Added DynamoDB VPC Interface Endpoint.
     Simplified S3 Cleanup Lambda Function to remove unnecessary code.
-    Additional inline template documentation.
+    Added output for S3 bucket name.
+      This is mostly a proof of concept for getting an auto-generated bucket's name.
+    #TODO: Additional inline template documentation.
     Metadata grammar edits.
   - Version 1.2, 07 July 2021:
     Removed Cloud9 instance temporarily.

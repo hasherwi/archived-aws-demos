@@ -41,7 +41,7 @@ Parameters: #Variable Inputs
   OwnedHostedZoneId:
     Type: String
     Default: none
-    Description: The Route 53 hosted zone ID for the above domain.
+    Description: The Route 53 hosted zone ID for the above domain. Example - Z0687820MAF0GNYEQVR8.
 #EC2 Parameters
   InitialWebServerCapacity:
     Type: Number
@@ -580,10 +580,11 @@ Resources:
               package_update: true
               package_upgrade: true
               packages:
-                - httpd #Apache HTTP Server https://httpd.apache.org/docs/
-                - pip   #Package Installer for Python (Used with ElastiCache demo) https://pip.pypa.io/en/stable/
+                - httpd   #Apache HTTP Server https://httpd.apache.org/docs/
+                - pip     #Package Installer for Python (Used with ElastiCache demo) https://pip.pypa.io/en/stable/
               runcmd:
                 - echo 'I finished attempting updates and package installs.'
+                #Make the index.html page
                 - sudo touch /var/www/html/index.html
                 - echo '<html><body><h1>I am a web server on EC2 instance' >> /var/www/html/index.html
                 - curl http://169.254.169.254/latest/meta-data/instance-id >> /var/www/html/index.html
@@ -593,11 +594,11 @@ Resources:
                 - curl http://169.254.169.254/latest/meta-data/placement/availability-zone >> /var/www/html/index.html
                 - echo ' AZ.' >> /var/www/html/index.html
                 - echo 'I created the webpage.'
+                #Web Server Configuration
                 - sudo chkconfig httpd on
-                - sudo service httpd start
-                - echo 'I started the web server.'
+                - echo 'I configured the web server to start on boot.'
               power_state:
-                mode: reboot
+                mode: reboot  #This is done to make sure updates are installed.
                 message: Rebooting per CloudInit
                 timeout: 300
   webServerPrivateSG:
@@ -611,6 +612,10 @@ Resources:
         - SourceSecurityGroupId: !Ref mainALBsg
           FromPort: 80
           ToPort: 80
+          IpProtocol: tcp
+        - SourceSecurityGroupId: !Ref mainALBsg
+          FromPort: 443
+          ToPort: 443
           IpProtocol: tcp
   webServerPublicSG:
     Type: AWS::EC2::SecurityGroup
@@ -726,13 +731,29 @@ Resources:
           FromPort: 80
           ToPort: 80
           IpProtocol: tcp
-  mainALBlistener:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 443
+          ToPort: 443
+          IpProtocol: tcp
+  mainALBlistenerHTTP:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Condition: BuildMoreThanOneAZ
     Properties:
       LoadBalancerArn: !Ref mainALB
       Port: 80
       Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref webServerTargetGroup
+  mainALBlistenerHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: BuildDomainAndMultiAZ
+    Properties:
+      LoadBalancerArn: !Ref mainALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref wildCertificate
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref webServerTargetGroup
@@ -775,7 +796,7 @@ Resources:
             QueryString: False
           Compress: True
           TargetOriginId: s3Origin
-          ViewerProtocolPolicy: allow-all
+          ViewerProtocolPolicy: redirect-to-https
         Origins:
           - S3OriginConfig:
               OriginAccessIdentity: !Sub
@@ -802,7 +823,7 @@ Resources:
             QueryString: False
           Compress: True
           TargetOriginId: albOrigin
-          ViewerProtocolPolicy: allow-all
+          ViewerProtocolPolicy: redirect-to-https
         Origins:
           - CustomOriginConfig:
               HTTPPort: 80
@@ -823,7 +844,7 @@ Resources:
             QueryString: False
           Compress: True
           TargetOriginId: s3Origin
-          ViewerProtocolPolicy: allow-all
+          ViewerProtocolPolicy: redirect-to-https
         Origins:
           - S3OriginConfig:
               OriginAccessIdentity: !Sub
@@ -843,7 +864,7 @@ Resources:
             QueryString: False
           Compress: True
           TargetOriginId: albOrigin
-          ViewerProtocolPolicy: allow-all
+          ViewerProtocolPolicy: redirect-to-https
         Origins:
           - CustomOriginConfig:
               HTTPPort: 80
@@ -965,10 +986,11 @@ Resources:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
       VpcId: !Ref mainVPC
       RouteTableIds:
+        - !Ref publicRTB
         - Fn::If:
           - BuildMoreThanOneAZ
           - Ref: privateRTBa
-          - Ref: publicRTB
+          - Ref: AWS::NoValue
         - Fn::If:
           - BuildSecondNAT
           - Ref: privateRTBb
@@ -1140,10 +1162,11 @@ Resources:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.dynamodb
       VpcId: !Ref mainVPC
       RouteTableIds:
+        - !Ref publicRTB
         - Fn::If:
           - BuildMoreThanOneAZ
           - Ref: privateRTBa
-          - Ref: publicRTB
+          - Ref: AWS::NoValue
         - Fn::If:
           - BuildSecondNAT
           - Ref: privateRTBb
@@ -1185,6 +1208,17 @@ Resources:
       Name: !Sub ${AWS::StackName}-Cloud9
       SubnetId: !Ref publicSubnetA
 #ElastiCache Resources
+  elasticacheSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${AWS::StackName}-ElastiCache-SG
+      GroupDescription: Allow Redis traffic from Web Servers to ElastiCache Cluster.
+      VpcId: !Ref mainVPC
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !If [ BuildMoreThanOneAZ, !Ref webServerPrivateSG, !Ref webServerPublicSG ]
+          FromPort: 6379  #Default Redis Port
+          ToPort: 6379
+          IpProtocol: tcp
 Outputs:
   mainALBdns:
     Description: Main ALB DNS Endpoint
@@ -1200,6 +1234,11 @@ Outputs:
     Value: !GetAtt mainS3Bucket.DomainName
     Export:
       Name: !Sub ${AWS::StackName}-mainS3dns
+  mainS3name:
+    Description: Main S3 Bucket Name
+    Value: !Select [ 0, !Split [ ., !GetAtt mainS3Bucket.DomainName ] ]
+    Export:
+      Name: !Sub ${AWS::StackName}-mainS3name
   cloudfrontS3DistroDNS:
     Description: CloudFront Distribution DNS Endpoint for S3 Origin
     Value:
