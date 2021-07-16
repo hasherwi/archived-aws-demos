@@ -16,5 +16,30 @@ Prerequistes:
   
 Script:
   Log in to the instance.
+  Run: aws s3 ls
+  Run: aws s3api list-buckets
+  Explain the difference between the low-level and high-level CLIs.
+    https://docs.aws.amazon.com/cli/latest/userguide/cli-services-s3-commands.html
+    https://docs.aws.amazon.com/cli/latest/userguide/cli-services-s3-apicommands.html
+  BUCKET_NAME=[YOUR_BUCKET_NAME_HERE]
+  OBJECT_NAME=[YOUR_OBJECT_NAME_HERE]
+  Run: aws s3api get-bucket-versioning --bucket $BUCKET_NAME
+  Show the URL for the object in the browser and copy it.
+  OBJECT_URL=[YOUR_OBJECT_URL_HERE]
+  Run: curl $OBJECT_URL
   #TODO
+  
+#NOTES
+sudo aws s3api get-object --bucket mydemos-mains3bucket-1gkdyr67hd94w --key hello.txt hello.txt
+sudo aws s3api list-object-versions --bucket hsherwin-demos --prefix hello.txt
+sudo aws s3api delete-object --bucket mydemos-mains3bucket-1gkdyr67hd94w --key hello.txt
+sudo aws s3api list-object-versions --bucket mydemos-mains3bucket-1gkdyr67hd94w --prefix hello.txt
+curl https://s3-us-west-2.amazonaws.com/hsherwin-demos/hello.txt
+sudo aws s3api delete-object --bucket mydemos-mains3bucket-1gkdyr67hd94w --key hello.txt --version-id bJTQXldGXdCMex8cxW8A7H.3185tk49d
+sudo aws s3api list-object-versions --bucket hsherwin-demos --prefix hello.txt
+curl https://s3-us-west-2.amazonaws.com/hsherwin-demos/hello.txt
+
+access object from internet, fail
+show bucket policy
+  
   
