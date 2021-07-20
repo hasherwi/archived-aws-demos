@@ -84,6 +84,7 @@ PLANNED IMPROVEMENTS:
     Tighten the S3 bucket policies to only allow CloudFront to get certain extensions.
     Add WAF.
     Tighten the wildcard certificates to specific subdomain certificates.
+    Update sample S3 objects for HTTPS.
 
   - Efficient Resource Usage:
     Optimize CIDR block usage.
@@ -103,8 +104,6 @@ RELEASE NOTES:
   - Version 1.3, 19 July 2021:
     Added Python SDK demos for use with EC2 and DynamoDB.
     Added demo script: S3 CLI.
-      #TODO: Finish it.
-      #TODO: Test it.
     Readded Cloud9 installation.
       It now uses SSH and the public subnet.
     Added ElastiCache demo components.
@@ -116,7 +115,6 @@ RELEASE NOTES:
     The web servers now support HTTPS when behind the ALB.
       Modified security groups to allow HTTPS traffic.
       Added an ALB listener for HTTPS traffic.
-    #TODO: Update S3 assets for HTTPS.
     Added DynamoDB VPC Interface Endpoint.
     Simplified S3 Cleanup Lambda Function to remove unnecessary code.
     Added output for S3 bucket name.

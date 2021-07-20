@@ -7,7 +7,7 @@ Demonstrates:
   S3 Versioning
   CLI: S3 versus S3api
   
-Prerequistes:
+Prerequisites:
   S3 Bucket with Versioning Enabled
   A simple text file that will cURL nicely
   AWS CLI and cURL installed
@@ -21,25 +21,38 @@ Script:
   Explain the difference between the low-level and high-level CLIs.
     https://docs.aws.amazon.com/cli/latest/userguide/cli-services-s3-commands.html
     https://docs.aws.amazon.com/cli/latest/userguide/cli-services-s3-apicommands.html
+  Copy your bucket name from the above commands.
   BUCKET_NAME=[YOUR_BUCKET_NAME_HERE]
   OBJECT_NAME=[YOUR_OBJECT_NAME_HERE]
+    Author Note: I use a simple text file called "hello.txt".
   Run: aws s3api get-bucket-versioning --bucket $BUCKET_NAME
+    We're checking to make sure that versioning is enabled.
   Show the URL for the object in the browser and copy it.
+  Explain why the object can't be retrieved in this way (because of the bucket permissions).
+  Optional: Show and explain the bucket policy.
   OBJECT_URL=[YOUR_OBJECT_URL_HERE]
+  Say: Let's look at the content of this object from our instance.
   Run: curl $OBJECT_URL
-  #TODO
-  
-#NOTES
-sudo aws s3api get-object --bucket mydemos-mains3bucket-1gkdyr67hd94w --key hello.txt hello.txt
-sudo aws s3api list-object-versions --bucket hsherwin-demos --prefix hello.txt
-sudo aws s3api delete-object --bucket mydemos-mains3bucket-1gkdyr67hd94w --key hello.txt
-sudo aws s3api list-object-versions --bucket mydemos-mains3bucket-1gkdyr67hd94w --prefix hello.txt
-curl https://s3-us-west-2.amazonaws.com/hsherwin-demos/hello.txt
-sudo aws s3api delete-object --bucket mydemos-mains3bucket-1gkdyr67hd94w --key hello.txt --version-id bJTQXldGXdCMex8cxW8A7H.3185tk49d
-sudo aws s3api list-object-versions --bucket hsherwin-demos --prefix hello.txt
-curl https://s3-us-west-2.amazonaws.com/hsherwin-demos/hello.txt
-
-access object from internet, fail
-show bucket policy
-  
-  
+  Explain why the cURL did work in constrast.
+  Say: Now we'll download the object and view its metadata with a GET command.
+  Run: sudo aws s3api get-object --bucket $BUCKET_NAME --key $OBJECT_NAME $OBJECT_NAME
+    Author Note: It's not a typo to repeat the object.
+  Say: And we can view what versions of it exist.
+  Run: sudo aws s3api list-object-versions --bucket $BUCKET_NAME --prefix $OBJECT_NAME
+  Say: I recently hired an intern. They're great but a little new to all of this. And they're going to accidentally delete the object.
+  Run: sudo aws s3api delete-object --bucket $BUCKET_NAME --key $OBJECT_NAME
+  Say: Poof! It's gone. A cURL to the object would fail now.
+  Run: curl $OBJECT_URL
+  Say: But if we look at our object versions...
+  Run: sudo aws s3api list-object-versions --bucket $BUCKET_NAME --prefix $OBJECT_NAME
+  Say: The object actally still exists, there's just a delete marker now defined as the latest object version. So our commands will fail by default.
+  Copy the VersionId of the delete marker.
+  Say: So what I can do, only because versioning is enabled, is delete the delete marker by specifying the delete command its version id.
+  Paste in to prompt: sudo aws s3api delete-object --bucket $BUCKET_NAME --key $OBJECT_NAME --version-id {VERSION_ID_OF_DELETE_MARKER}
+  Paste in the VersionId.
+    It looks like this: dQS7PZuIkVVsOIZ0C0iDh89bdWFBhckK.
+  Run the constructed command.
+  Say: Now the delete marker is gone.
+  Run: sudo aws s3api list-object-versions --bucket $BUCKET_NAME --prefix $OBJECT_NAME
+  Run: curl $OBJECT_URL
+  Say: And now my object is restored.
