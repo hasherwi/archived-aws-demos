@@ -1,33 +1,44 @@
 ElastiCache Redis Demo
 
 Demonstrates:
-  #TODO
+  Usage of Redis on ElastiCache from an EC2 instance with VPC protections.
   
-Prerequistes:
-  #TODO
+Prerequisites:
+  Redis on ElastiCache Cluster
+  EC2 instance (Possibly Cloud9) to use python and redis-py from
+  Network access between the instance and ElastiCache cluster
   
 Script:
+  Access tje ElastiCache dashboard.
+  Show and copy the primary endpoint for your ElastiCache cluster.
+    COPY WITHOUT THE ":6379". Your copy should end in ".com".
+    It should look something like this: mydemo-elasticache-cluster.fuafpw.0001.use1.cache.amazonaws.com
+  Optional: Walkthrough the security group rules for your instance and cluster.
   Log in to the instance.
-  #TODO
+  Run: python
+    This will change the prompt to ">>> ".
+  Run: endpoint = {YOUR_COPIED_ENDPOINT_HERE}
+  Run: import redis
+    If this fails, run the next two commands:
+      sudo yum install python-pip -y
+      pip install redis --user
+  Say: We'll go ahead and tell the local machine how to communicate with the Redis cluster.
+  Run: cache = redis.Redis(host=endpoint, port=6379, db=0)
+  Say: Now we are going to put some data into the cache.
+  Run: cache.set('customer.1234.name', 'Harrison Sherwin')
+  Say: And now we will read that data back.
+  Run: cache.get('customer.1234.name')
+  Say: Some more data.
+  Run: cache.set('customer.1234.state', 'CO')
+  Say: Some more reading data.
+  Run: cache.get('customer.1234.state')
+  Say: Now we will write some data with a TTL so the data will expire after 10 seconds.
+  Run: cache.set('customer.5678.name', 'Jane Doe', 10)
+  Run (within 10 seconds): cache.get('customer.5678.name')
+  Say: There's the data.
+  Run (after 10 seconds): cache.get('customer.5678.name')
+  Say: And now it's gone. Let's cleanup up our cache finally.
+  Run: cache.delete('customer.1234.name')
+  Run: cache.delete('customer.1234.state')
   
-#NOTES
-  Show endpoint.
-  show security group.
-  //redis demo
-	//setup
-*sudo yum install python-pip -y
-*pip install redis --user
-	//demo start
-python
-import redis
-cache = redis.Redis(host='elasticache-demo.fuafpw.0001.use1.cache.amazonaws.com:6379', port=6379, db=0)
-cache.set('customer.1234.name', 'Harrison Sherwin')
-cache.get('customer.1234.name')
-cache.set('customer.1234.state', 'CO')
-cache.get('customer.1234.state')
-	//TTL
-cache.set('customer.5678.name', 'Jane Doe', 10)
-cache.get('customer.5678.name')
-	//Cleanup
-cache.delete('customer.1234.name')
-cache.delete('customer.1234.state')
+mydemo-elasticache-cluster.fuafpw.0001.use1.cache.amazonaws.com:6379
