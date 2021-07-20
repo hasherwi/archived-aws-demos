@@ -101,6 +101,13 @@ PLANNED IMPROVEMENTS:
     Use AWS::URLSuffix psuedo parameter where appropiate.
 
 RELEASE NOTES:
+  - Version 2.0, XX July 2021:
+    Scope:
+      More input validiation.
+      Use StackSets to solve cert/us-east-1 problem.
+      Create smaller, standalone subset templates.
+      Enhance documentation for above changes.
+      Add architecture diagrams to documentation.
   - Version 1.3, 19 July 2021:
     Added Python SDK demos for use with EC2 and DynamoDB.
     Added demo script: S3 CLI.
