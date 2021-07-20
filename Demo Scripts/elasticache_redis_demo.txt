@@ -9,7 +9,7 @@ Prerequisites:
   Network access between the instance and ElastiCache cluster
   
 Script:
-  Access tje ElastiCache dashboard.
+  Access the ElastiCache dashboard.
   Show and copy the primary endpoint for your ElastiCache cluster.
     COPY WITHOUT THE ":6379". Your copy should end in ".com".
     It should look something like this: mydemo-elasticache-cluster.fuafpw.0001.use1.cache.amazonaws.com
