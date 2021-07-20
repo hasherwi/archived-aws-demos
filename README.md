@@ -108,6 +108,11 @@ RELEASE NOTES:
       Create smaller, standalone subset templates.
       Enhance documentation for above changes.
       Add architecture diagrams to documentation.
+      Remove author's name from components.
+      Automatically load the sample S3 objects into the bucket.
+    Change sample index.html file header from "hsherwin.com" to "My Webpage".
+      All the links are still specific to this domain (for now), but it should be more palatable now for other instructors in quick scenarios.
+      
   - Version 1.3, 19 July 2021:
     Added Python SDK demos for use with EC2 and DynamoDB.
     Added demo script: S3 CLI.
@@ -129,6 +134,7 @@ RELEASE NOTES:
     Minor fix to EC2 user data to close HTML tags on index.html page.
     Additional inline template documentation.
     Metadata grammar edits.
+    
   - Version 1.2, 07 July 2021:
     Removed Cloud9 instance temporarily.
     Added resources to empty (and allowing deletion of) the S3 bucket on stack deletion.
@@ -139,8 +145,10 @@ RELEASE NOTES:
     Trimmed all trailing whitespace.
     Resolved Issue where the wrong Route Table was associated with Private Subnet F.
     Swapped Public Subnet B through F creation to be based on NAT count and not AZ count. So resources are no longer created unnecessarily. Modified downstream dependencies as needed.
+    
   - Version 1.1, 29 June 2021:
     Bug Fix where lb-cache subdomain was unusable.
     Added Cloud9 Instance deployment.
+    
   - Version 1.0, 22 June 2021:
     Initial Release.

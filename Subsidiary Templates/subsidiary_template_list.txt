@@ -1,0 +1,13 @@
+An Index of All Subsidiary Templates:
+
+CURRENT LIST:
+  (None)
+
+VERSION 2.0 PLANS:
+  static.domain.com stack
+  lb.domain.com stack
+  lb-cache.domain.com stack
+  
+VERSION 2.1 PLANS:
+  elasticache stack
+  dynamodb stack
