@@ -13,19 +13,18 @@ PREREQUISITES:
   - (Optional) Deploy a Route 53 hosted zone if you'll be using a domain.
 
 DEPLOYMENT STEPS:
-  1. Deploy the template to create the CloudFormation stack. Use region us-east-1 if you plan to deploy a domain.
+  1. Deploy the template to create the CloudFormation stack.
     AWS CLI Command Example Without Domain Deployment:
       aws cloudformation deploy --template-file C:\Users\hasherwi\Downloads\Sherwin_TIPS_Demo\Sherwin_Demos.yaml --stack-name tips-demo --capabilities CAPABILITY_NAMED_IAM --parameter-overrides NumberOfAZs=2 NumberOfNATs=2  InitialWebServerCapacity=4
     AWS CLI Command Example With Domain Deployment:
       aws cloudformation deploy --template-file C:\Users\hasherwi\Downloads\Sherwin_TIPS_Demo\Sherwin_Demos.yaml --stack-name tips-demo --capabilities CAPABILITY_NAMED_IAM --region us-east-1 --parameter-overrides NumberOfAZs=2 NumberOfNATs=2 OwnedDomainName="hsherwin.com" OwnedHostedZoneId="Z0687820MAF0GNYEQVR8" InitialWebServerCapacity=4
   2. (Optional) Add static web components to the auto-generated S3 bucket.
-  3. (Optional) Confirm the SNS email, if an email address was provided.
 
 KNOWN ISSUES:
   - Removing AZs during stack modification can fail to delete public subnets related to ALB ENIs.
     --No workaround known, manually delete the ALB.
 
-  - When using a domain, a hosted zone is required to already exist and the stack must be deployed to us-east-1. These are the only current dependencies because domains purchased outside of Route 53 require advance notice of name server configurations.
+  - When using a domain, a hosted zone is required to already exist. This is the only current dependency because domains purchased outside of Route 53 require advance notice of name server configurations.
     --No workaround, create the hosted zone before stack deployment.
 
   - A common limit that can halt deployment is Elastic IPs. By default, every account has a limit of 5 EIPs per region.
@@ -36,19 +35,20 @@ KNOWN ISSUES:
   - Selecting more AZs than exist in the region will result in a stack failure with the following error, where # is replaced with the number of AZs available:
     --Template error: Fn::Select cannot select nonexistent value at index #
     --No known workaround.
-  
+
   - create_table.py fails on the Cloud9 instance because of a defined session_token in the credentials file.
     --Workaround: Remove the session_token.
+    
+  -Because a static call is made to deploy the certificates in us-east-1, the stack is currently deployable only in the commerical partition:
+    --No known workaround.
 
 PLANNED IMPROVEMENTS:
   - Standalone Functionality:
     Create standalone, smaller scoped templates for unspecifed project.
-    Create stacksets for use with certificates.
     Create storyline template to point to smaller scoped templates.
-  
+
   - More Functionality:
     Add cross-VPC TGW demo.
-    Add Lambda demos.
     Add ECS/EKS/ECR/Fargate demos.
     Add API Gateway demos.
     Add Step Functions demos.
@@ -67,8 +67,6 @@ PLANNED IMPROVEMENTS:
     Automatically personalize the index.html page using AWS Lambda.
 
   - More Validation:
-    Add an AllowedPattern for OwnedDomainName.
-    Add an AllowedPattern for OwnedHostedZoneId.
     Check if the requested AZ count exceeds the region AZ count.
 
   - Transition from Deprecated Functionality:
@@ -78,24 +76,26 @@ PLANNED IMPROVEMENTS:
     Fix known issue with session_token.
     Import more data into table.
     Add more query and scan scenarios.
-    
+
   - Security Improvements:
     Tighten the S3 Cleaner Lambda Policies.
+    Tighten the Cert Creator Lambda Policies.
     Tighten the S3 bucket policies to only allow CloudFront to get certain extensions.
     Add WAF.
     Tighten the wildcard certificates to specific subdomain certificates.
-    Update sample S3 objects for HTTPS.
+    Update sample S3 objects for HTTPS.s
 
   - Efficient Resource Usage:
     Optimize CIDR block usage.
     Consolidate CloudFront Distributions.
 
   - Remove Manual Processes:
-    Automatically delete the ACM DNS validation Route 53 record on stack deletion.
     Automatically unpack static website resources into the S3 bucket with a Lambda function.
 
   - More User Choice:
     Add Secondary VPC deployment choice.
+    
+  - Multi-Partition Support.
 
   - Other:
     Use AWS::URLSuffix psuedo parameter where appropiate.
@@ -103,16 +103,21 @@ PLANNED IMPROVEMENTS:
 RELEASE NOTES:
   - Version 2.0, XX July 2021:
     Scope:
-      More input validiation.
-      Use StackSets to solve cert/us-east-1 problem.
       Create smaller, standalone subset templates.
       Enhance documentation for above changes.
       Add architecture diagrams to documentation.
-      Remove author's name from components.
       Automatically load the sample S3 objects into the bucket.
+    Created a lambda to call the certificates to be created so this can occur cross-regionally.
+      #TODO: Write the creation code.
+      #TODO: Write the deletion code.
+      #TODO: Test the code.
+    Added validation of the Route 53 Hosted Zone parameter.
+      "Type: AWS::Route53::HostedZone::Id" from "Type: String".
+    Added use of the AWS::Partition pseudo parameter in webServerRole.
+    Change file and directory names to remove "Sherwin".
     Change sample index.html file header from "hsherwin.com" to "My Webpage".
       All the links are still specific to this domain (for now), but it should be more palatable now for other instructors in quick scenarios.
-      
+
   - Version 1.3, 19 July 2021:
     Added Python SDK demos for use with EC2 and DynamoDB.
     Added demo script: S3 CLI.
@@ -134,7 +139,7 @@ RELEASE NOTES:
     Minor fix to EC2 user data to close HTML tags on index.html page.
     Additional inline template documentation.
     Metadata grammar edits.
-    
+
   - Version 1.2, 07 July 2021:
     Removed Cloud9 instance temporarily.
     Added resources to empty (and allowing deletion of) the S3 bucket on stack deletion.
@@ -145,10 +150,10 @@ RELEASE NOTES:
     Trimmed all trailing whitespace.
     Resolved Issue where the wrong Route Table was associated with Private Subnet F.
     Swapped Public Subnet B through F creation to be based on NAT count and not AZ count. So resources are no longer created unnecessarily. Modified downstream dependencies as needed.
-    
+
   - Version 1.1, 29 June 2021:
     Bug Fix where lb-cache subdomain was unusable.
     Added Cloud9 Instance deployment.
-    
+
   - Version 1.0, 22 June 2021:
     Initial Release.

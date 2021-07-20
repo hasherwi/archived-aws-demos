@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 #Version 2.0.
-Description: Harrison Sherwin course demos template
+Description: Main template for deploying the Sherwin demo set.
 Parameters: #Variable Inputs
 #Networking Parameters
   MainCidrBlock:
@@ -39,9 +39,9 @@ Parameters: #Variable Inputs
     MinLength: 4
     MaxLength: 255
   OwnedHostedZoneId:
-    Type: String
-    Default: none
-    Description: The Route 53 hosted zone ID for the above domain. Example - Z0687820MAF0GNYEQVR8.
+    Type: AWS::Route53::HostedZone::Id
+    Default: Z0687820MAF0GNYEQVR8
+    Description: The Route 53 hosted zone ID for the above domain. Example - Z0687820MAF0GNYEQVR8. Leave to the default if not using a domain.
 #EC2 Parameters
   InitialWebServerCapacity:
     Type: Number
@@ -751,6 +751,7 @@ Resources:
   mainALBlistenerHTTPS:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Condition: BuildDomainAndMultiAZ
+    DependsOn: certStackLambda
     Properties:
       LoadBalancerArn: !Ref mainALB
       Port: 443
@@ -771,17 +772,76 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - ec2.amazonaws.com
+                - !Sub ec2.${AWS::URLSuffix}
             Action:
               - 'sts:AssumeRole'
       MaxSessionDuration: 3600  #In Seconds
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess  #This is a built-in policy.
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore  #This is a built-in policy.
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonS3FullAccess  #This is a built-in policy.
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore  #This is a built-in policy.
+  certStackLambdaRole:
+    Type: AWS::IAM::Role
+    Condition: BuildDomain
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - !Sub lambda.${AWS::URLSuffix}
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: !Sub ${AWS::StackName}-Cert-Creator
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - route53:ChangeResourceRecordSets
+            - route53:ListResourceRecordSets
+            - acm:RequestCertificate
+            - acm:GetCertificate
+            - acm:DeleteCertificate
+            - acm:ListCertificates
+            - logs:*
+            Resource:
+            - !Sub arn:${AWS::Partition}:route53:::hostedzone/${!Ref HostedZoneId}
+            - !Sub arn:${AWS::Partition}:acm:us-east-1:${AWS::AccountId}:certificate/*
+  cleanupBucketLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - !Sub lambda.${AWS::URLSuffix}
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: !Sub ${AWS::StackName}-S3-Cleaner-Policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:*
+            - s3:*
+            Resource: '*'
+          - Effect: Deny
+            Action:
+            - s3:DeleteBucket
+            Resource: '*'
 #CloudFront Resources
   cloudfrontS3DistroWithDomain:
     Type: AWS::CloudFront::Distribution
     Condition: BuildDomain
+    DependsOn: certStackLambda
     Properties:
       DistributionConfig:
         Enabled: True
@@ -810,6 +870,7 @@ Resources:
   cloudfrontLBDistroWithDomain:
     Type: AWS::CloudFront::Distribution
     Condition: BuildDomainAndMultiAZ
+    DependsOn: certStackLambda
     Properties:
       DistributionConfig:
         Enabled: True
@@ -881,30 +942,55 @@ Resources:
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: !Sub ${AWS::StackName}-CloudFront-OAI
-#ACM Resources
-  wildCertificate:
-    Type: AWS::CertificateManager::Certificate
+#Components to Create Certificates (This also works as a Lambda demo)
+  createCerts:
+    Type: Custom::createCerts
+    DependsOn: certStackLambda
     Condition: BuildDomain
-    Properties:
-      DomainName:
-        Fn::Sub:
-          - "*.${Domain}"
-          - Domain: !Ref OwnedDomainName
-      DomainValidationOptions:
-        - DomainName: !Ref OwnedDomainName
-          HostedZoneId: !Ref OwnedHostedZoneId
-      ValidationMethod: 'DNS'
-    DependsOn:
-      - rootCertificate
-  rootCertificate:
-    Type: AWS::CertificateManager::Certificate
-    Condition: BuildDomain
+    Version: 1.0
     Properties:
       DomainName: !Ref OwnedDomainName
-      DomainValidationOptions:
-        - DomainName: !Ref OwnedDomainName
-          HostedZoneId: !Ref OwnedHostedZoneId
-      ValidationMethod: 'DNS'
+      Region: us-east-1
+      ServiceToken:
+        !GetAtt certStackLambda.Arn
+  certStackLambda:
+    Type: AWS::Lambda::Function
+    Condition: BuildDomain
+    Properties:
+      Handler: lambda_function.lambda_handler
+      MemorySize: 128
+      Role: !Ref certStackLambdaRole.Arn
+      Runtime: python3.6
+      Timeout: 900
+      Code:
+        ZipFile: !Sub |
+          def lambda_handler(event, context):
+              try:
+                  domain = event['ResourceProperties']['DomainName']
+                  if event['RequestType'] == 'Create':
+                      create_records(domain)
+                  if event['RequestType'] == 'Update':
+                      delete_records(domain)
+                      create_records(domain)
+                  if event['RequestType'] == 'Delete':
+                      delete_records(domain)
+                  sendResponseCfn(event, context, "SUCCESS")
+              except Exception as e:
+                  print(e)
+                  sendResponseCfn(event, context, "FAILED")
+          def sendResponseCfn(event, context, responseStatus):
+              response_body = {'Status': responseStatus,
+                               'Reason': 'Log stream name: ' + context.log_stream_name,
+                               'PhysicalResourceId': context.log_stream_name,
+                               'StackId': event['StackId'],
+                               'RequestId': event['RequestId'],
+                               'LogicalResourceId': event['LogicalResourceId'],
+                               'Data': json.loads("{}")}
+              requests.put(event['ResponseURL'], data=json.dumps(response_body))
+          def create_records(domain):
+              #Code here.
+          def delete_records(domain):
+              #Code here.
 #Route 53 Resources
   lbSubDomain:
     Type: AWS::Route53::RecordSet
@@ -1025,8 +1111,8 @@ Resources:
               - '*'
   cleanupBucket:
     #Source: https://gist.github.com/drumadrian/e1601ab34e7f609b5075f65599108960
-    DependsOn: cleanupBucketLambda
     Type: Custom::cleanupBucket
+    DependsOn: cleanupBucketLambda
     Properties:
       ServiceToken:
         !GetAtt cleanupBucketLambda.Arn
@@ -1118,33 +1204,6 @@ Resources:
       Role : !GetAtt cleanupBucketLambdaRole.Arn
       Runtime: python2.7
       Timeout: 60
-  cleanupBucketLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Path: "/"
-      Policies:
-      - PolicyName: !Sub ${AWS::StackName}-S3-Cleaner-Policy
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - logs:*
-            - s3:*
-            Resource: '*'
-          - Effect: Deny
-            Action:
-            - s3:DeleteBucket
-            Resource: '*'
 #Database Resources
   dynamoTable:
     Type: AWS::DynamoDB::Table
