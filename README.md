@@ -36,8 +36,16 @@ KNOWN ISSUES:
   - Selecting more AZs than exist in the region will result in a stack failure with the following error, where # is replaced with the number of AZs available:
     --Template error: Fn::Select cannot select nonexistent value at index #
     --No known workaround.
+  
+  - create_table.py fails on the Cloud9 instance because of a defined session_token in the credentials file.
+    --Workaround: Remove the session_token.
 
 PLANNED IMPROVEMENTS:
+  - Standalone Functionality:
+    Create standalone, smaller scoped templates for unspecifed project.
+    Create stacksets for use with certificates.
+    Create storyline template to point to smaller scoped templates.
+  
   - More Functionality:
     Add cross-VPC TGW demo.
     Add Lambda demos.
@@ -66,6 +74,11 @@ PLANNED IMPROVEMENTS:
   - Transition from Deprecated Functionality:
     Remove ForwardedValues from CloudFront resources for CachePolicyId.
 
+  - DynamoDB Python Code:
+    Fix known issue with session_token.
+    Import more data into table.
+    Add more query and scan scenarios.
+    
   - Security Improvements:
     Tighten the S3 Cleaner Lambda Policies.
     Tighten the S3 bucket policies to only allow CloudFront to get certain extensions.
@@ -87,10 +100,8 @@ PLANNED IMPROVEMENTS:
     Use AWS::URLSuffix psuedo parameter where appropiate.
 
 RELEASE NOTES:
-  - Version 1.3, XX July 2021:
+  - Version 1.3, 19 July 2021:
     Added Python SDK demos for use with EC2 and DynamoDB.
-      #TODO: Test create_table code. Because it's failing. On EC2 because of instance profil.e On Cloud9 due to SessionToken in credentials.
-      #TODO: Expand with more data and scans/queries, then test.
     Added demo script: S3 CLI.
       #TODO: Finish it.
       #TODO: Test it.
@@ -100,7 +111,7 @@ RELEASE NOTES:
       Added pip and redis-py installation to EC2 instances user data.
       New ElastiCache cluster, EC2 security group and ElastiCache subnet group.
       Output for cluster endpoint address.
-      #TODO: Demo script: Author, test
+      Demo script.
     Now redirecting HTTP to HTTPS for CloudFront distributions.
     The web servers now support HTTPS when behind the ALB.
       Modified security groups to allow HTTPS traffic.
