@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<!--[if lt IE 7 ]><html class="ie ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]><html class="ie ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]><html class="ie ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!-->
+<html lang="en">
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!--[if IE]>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <![endif]-->
+    <title>My Static Website</title>
+    <!--REQUIRED STYLE SHEETS-->
+    <!-- BOOTSTRAP CORE STYLE CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- FONTAWESOME STYLE CSS -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" crossorigin="anonymous">
+    <!-- CUSTOM STYLE CSS -->
+    <link href="style.css" rel="stylesheet" />
+    <!-- GOOGLE FONT -->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    <!--Header section  -->
+    <div class="container" id="home">
+        <div class="row text-center">
+            <div class="col-md-12">
+                <h1 class="head-main"> <i class="fab fa-aws fa-2x"></i></h1>
+                <h2 class="head-sub-main"> Served from Amazon S3 </h2>
+            </div>
+        </div>
+    </div>
+    <!--End Header section  -->
+
+    <!-- Navigation -->
+    <nav class="navbar-inverse" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="http://static.hsherwin.com">My Webpage</a>
+            </div>
+            <!-- Collect the nav links for toggling -->
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="#home"><i class="fas fa-home"></i></a>
+                    </li>
+                    <li><a href="#examples">Examples</a>
+                    </li>
+                    <li><a href="#work-sec">Portfolio</a>
+                    </li>
+                    <li><a href="#contact-sec">Contact</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+    <!--End Navigation -->
+
+    <!--Examples Section-->
+    <section class="color-dark" id="examples">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-8 col-md-offset-2 ">
+                    <h2 style="padding-top:50px; color:white;">S3 JavaScript Example</h2>
+                    <div id="clock"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="color-light" id="class-links">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-12">
+                    <h2>Class Links </h2>
+                    <p><a href="http://lb.hsherwin.com">Load Balancer in front of EC2</a></p>
+                    <p><a href="http://lb-cache.hsherwin.com">Cached Load Balancer Response</a></p>
+                    <p><a href="https://github.com/hasherwi/">My GitHub Repos (for Demos and vILT Set-up)</a></p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!--End About Section-->
+
+    <!-- Portfolio Section -->
+    <section class="color-dark" id="work-sec">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-8 col-md-offset-2">
+                    <h2 style="color:white;">My Portfolio (To Do)</h2>
+                        <strong style="color:white;">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                            Curabitur nec nisl odio. Mauris vehicula at nunc id posuere.
+                        </strong>
+                    </h4>
+                </div>
+            </div>
+
+            </div>
+        </div>
+    </section>
+    <!--End Transformation Section -->
+    <!-- Contact Section -->
+    <section class="color-light " id="contact-sec">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 contact-cls">
+                    <h3>Contact</h3>
+                    <div>
+                        <i class="fa fa-envelope"></i><a href="mailto: hasherwi@amazon.com">hasherwi@amazon.com </a>
+                        <br/><i class="fa fa-home"></i><a href="https://goo.gl/maps/BhkNmSkv3CNGXWtC6">Address: Denver, CO, USA</a> 
+                        <br/>
+                        <i class="fa fa-phone"></i><a href="tel:+19166780202">Phone: +1-916-678-0202</a>
+                    </div>
+
+                </div>
+                <div class="col-md-4">
+                    <br />
+                    <div id="social-icon">
+                        <a href="https://twitter.com/hcsherwin"><i class="fab fa-twitter fa-3x"></i></a>
+                        <a href="https://www.linkedin.com/in/hsherwin/"><i class="fab fa-linkedin fa-3x"></i></a>
+                        <a href="https://github.com/hasherwi/"><i class="fab fa-github fa-3x"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!--End Contact Section -->
+
+    <!--Map Section -->
+    <section class="color-light " id="map-sec">
+        <iframe class=cnt src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d196281.88171443433!2d-104.99519614393348!3d39.76425475129411!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x876b80aa231f17cf%3A0x118ef4f8278a36d6!2sDenver%2C%20CO!5e0!3m2!1sen!2sus!4v1616012303921!5m2!1sen!2sus" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+    </section>
+    <!--End Map Section -->
+    <!--footer Section -->
+    <div class="for-full-back " id="footer">
+        CSS Template from <a href="https://www.free-css.com/free-css-templates/page203/image-less">Free CSS</a>
+    </div>
+    <!--End footer Section -->
+    <!-- JAVASCRIPT FILES PLACED AT THE BOTTOM TO REDUCE THE LOADING TIME  -->
+    <!-- CORE JQUERY  -->
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <!-- BOOTSTRAP CORE SCRIPT   -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <!-- CUSTOM SCRIPTS -->
+    <script src="script.js"></script>
+	<script src="clock.js"></script>
+
+</body>
+
+</html>
