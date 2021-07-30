@@ -9,6 +9,7 @@ First, see my presentation here that's also in this package (Sherwin_Demos_Prese
 Comments, Questions, and Bug Reports can be sent to: hasherwi@amazon.com.
 
 PREREQUISITES:
+  - Permissions are needed for all resource creation.
   - Make sure you have permissions to add S3 Bucket Policies on a per bucket basis.
   - (Optional) Deploy a Route 53 hosted zone if you'll be using a domain.
 
@@ -44,7 +45,6 @@ KNOWN ISSUES:
 
 PLANNED IMPROVEMENTS:
   - Standalone Functionality:
-    Create standalone, smaller scoped templates for unspecifed project.
     Create storyline template to point to smaller scoped templates.
 
   - More Functionality:
@@ -83,30 +83,26 @@ PLANNED IMPROVEMENTS:
     Tighten the S3 bucket policies to only allow CloudFront to get certain extensions.
     Add WAF.
     Tighten the wildcard certificates to specific subdomain certificates.
-    Update sample S3 objects for HTTPS.s
+    Update sample S3 objects for HTTPS.
 
   - Efficient Resource Usage:
     Optimize CIDR block usage.
     Consolidate CloudFront Distributions.
-
-  - Remove Manual Processes:
-    Automatically unpack static website resources into the S3 bucket with a Lambda function.
 
   - More User Choice:
     Add Secondary VPC deployment choice.
     
   - Multi-Partition Support.
 
-  - Other:
-    Use AWS::URLSuffix psuedo parameter where appropiate.
-
 RELEASE NOTES:
   - Version 2.0, XX July 2021:
     Scope:
+      #TODO: All of the below
       Create smaller, standalone subset templates.
       Enhance documentation for above changes.
       Add architecture diagrams to documentation.
       Automatically load the sample S3 objects into the bucket.
+        Add create code to existing S3 lambda.
     Created a lambda to call the certificates to be created so this can occur cross-regionally.
       #TODO: Write the creation code.
       #TODO: Write the deletion code.
