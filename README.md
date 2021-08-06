@@ -22,7 +22,7 @@ DEPLOYMENT STEPS:
   2. (Optional) Add static web components to the auto-generated S3 bucket.
 
 KNOWN ISSUES:
-  - Removing AZs during stack modification can fail to delete public subnets related to ALB ENIs.
+  - Rarely, removing AZs during stack modification can fail to delete public subnets related to ALB ENIs.
     --No workaround known, manually delete the ALB.
 
   - When using a domain, a hosted zone is required to already exist. This is the only current dependency because domains purchased outside of Route 53 require advance notice of name server configurations.
@@ -41,7 +41,7 @@ KNOWN ISSUES:
     --Workaround: Remove the session_token.
     
   -Because a static call is made to deploy the certificates in us-east-1, the stack is currently deployable only in the commerical partition:
-    --No known workaround.
+    --Workaround: Deploy demos only in the commerical partition.
 
 PLANNED IMPROVEMENTS:
   - Standalone Functionality:
@@ -68,6 +68,8 @@ PLANNED IMPROVEMENTS:
 
   - More Validation:
     Check if the requested AZ count exceeds the region AZ count.
+    Check if the ARN is valid in lambda for creating the cert for sending success.
+    Check if the lambda certificate calls actually worked
 
   - Transition from Deprecated Functionality:
     Remove ForwardedValues from CloudFront resources for CachePolicyId.
@@ -95,18 +97,20 @@ PLANNED IMPROVEMENTS:
   - Multi-Partition Support.
 
 RELEASE NOTES:
-  - Version 2.0, XX July 2021:
+  - Version 2.0, 06 August 2021:
     Scope:
       #TODO: All of the below
       Create smaller, standalone subset templates.
       Enhance documentation for above changes.
       Add architecture diagrams to documentation.
-      Automatically load the sample S3 objects into the bucket.
-        Add create code to existing S3 lambda.
-    Created a lambda to call the certificates to be created so this can occur cross-regionally.
-      #TODO: Write the creation code.
-      #TODO: Write the deletion code.
+    Added functionality to the lambda function interacting with S3 to fill the bucket.
+      Upgraded to Python 3.8
+      #TODO: Write the fill code.
       #TODO: Test the code.
+    Created a lambda to call the certificates to be created in us-east-1 so the demo can occur be deployed with a domain cross-regionally.
+      #TODO: Test the creation code.
+      #TODO: Write the deletion code.
+      #TODO: Test the deletion code.
     Added validation of the Route 53 Hosted Zone parameter.
       "Type: AWS::Route53::HostedZone::Id" from "Type: String".
     Added use of the AWS::Partition pseudo parameter in webServerRole.

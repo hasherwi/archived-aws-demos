@@ -757,7 +757,7 @@ Resources:
       Port: 443
       Protocol: HTTPS
       Certificates:
-        - CertificateArn: !Ref wildCertificate
+        - CertificateArn: !GetAtt createCerts.wildArn
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref webServerTargetGroup
@@ -850,7 +850,7 @@ Resources:
             - static.${Domain}
             - Domain: !Ref OwnedDomainName
         ViewerCertificate:
-          AcmCertificateArn: !Ref wildCertificate
+          AcmCertificateArn: !GetAtt createCerts.wildArn
           SslSupportMethod: sni-only
         DefaultRootObject: index.html
         DefaultCacheBehavior:
@@ -879,7 +879,7 @@ Resources:
             - lb-cache.${Domain}
             - Domain: !Ref OwnedDomainName
         ViewerCertificate:
-          AcmCertificateArn: !Ref wildCertificate
+          AcmCertificateArn: !GetAtt createCerts.wildArn
           SslSupportMethod: sni-only
         DefaultCacheBehavior:
           #CachePolicyId should be used instead of ForwardedValues, but CachePolicyId's can't be created by CloudFront directly. This is a future improvement. https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudfront-distribution-defaultcachebehavior.html
@@ -950,7 +950,7 @@ Resources:
     Version: 1.0
     Properties:
       DomainName: !Ref OwnedDomainName
-      Region: us-east-1
+      Region: us-east-1 #Region is being defined here, so we can add a mapping later to possibly support this in other partitions.
       ServiceToken:
         !GetAtt certStackLambda.Arn
   certStackLambda:
@@ -959,64 +959,77 @@ Resources:
     Properties:
       Handler: lambda_function.lambda_handler
       MemorySize: 128
-      Role: !Ref certStackLambdaRole.Arn
-      Runtime: python3.6
-      Timeout: 900
+      Role: !GetAtt certStackLambdaRole.Arn
+      Runtime: python3.8
+      Timeout: 60
       Code:
         ZipFile: !Sub |
+          import json
+          import boto3
+          from botocore.config import Config
+          from botocore.vendored import requests
+          
           def lambda_handler(event, context):
               try:
-                  domain = event['ResourceProperties']['DomainName']
+                  #CloudFormation Variables
+                  rootDomain = event['ResourceProperties']['DomainName']
                   region = event['ResourceProperties']['Region']
+                  
+                  #Create a reusable ACM client for the target region.
+                  my_config = Config(
+                      region_name = region
+                  )
+                  acmClient = boto3.client('acm', config=my_config)
+                  
+                  #Other Cert Names
+                  wildDomain = "*." + region
+                  
+                  #Logic
                   if event['RequestType'] == 'Create':
-                      create_certs(domain, region)
-                  if event['RequestType'] == 'Update':
-                      delete_certs(domain, region)
-                      create_certs(domain, region)
+                      rootArn = create_cert(rootDomain, client)
+                      wildArn = create_cert(wildDomain, client)
                   if event['RequestType'] == 'Delete':
-                      delete_records(domain, region)
-                  sendResponseCfn(event, context, "SUCCESS")
+                      delete_cert(rootDomain, client)
+                      delete_cert(wildDomain, client)
+                      delete_records(rootDomain, client)
+                  sendResponseCfn(event, context, "SUCCESS", rootArn, wildArn)
               except Exception as e:
                   print(e)
-                  sendResponseCfn(event, context, "FAILED")
-          def sendResponseCfn(event, context, responseStatus):
+                  sendResponseCfn(event, context, "FAILED", "", "")
+          
+          def sendResponseCfn(event, context, responseStatus, rootArn, wildArn):
+              #This lets us pass the data BACK to CloudFormation
               response_body = {'Status': responseStatus,
                                'Reason': 'Log stream name: ' + context.log_stream_name,
                                'PhysicalResourceId': context.log_stream_name,
                                'StackId': event['StackId'],
                                'RequestId': event['RequestId'],
                                'LogicalResourceId': event['LogicalResourceId'],
-                               'Data': json.loads("{}")}
+                               'Data': json.loads("{"rootArn": rootArn,"wildArn": wildArn}")}
               requests.put(event['ResponseURL'], data=json.dumps(response_body))
-          def create_certs(domain, region):
-              acmClient = boto3.client('acm')
+          def create_certs(domain, client):
+              #Makes the cert
               response = client.request_certificate(
                   DomainName=domain,
                   ValidationMethod='DNS',
-                  SubjectAlternativeNames=[
-                      'string',
-                  ],
-                  IdempotencyToken='string',
-                  DomainValidationOptions=[
-                      {
-                          'DomainName': 'string',
-                          'ValidationDomain': 'string'
-                      },
-                  ],
-                  Options={
-                      'CertificateTransparencyLoggingPreference': 'ENABLED'|'DISABLED'
-                  },
-                  CertificateAuthorityArn='string',
-                  Tags=[
-                      {
-                          'Key': 'string',
-                          'Value': 'string'
-                      },
-                  ]
+                  IdempotencyToken=domain
               )
-          def delete_records(domain, region):
-              acmClient = boto3.client('acm')
-              #Code here.
+              
+              #Logs to CloudWatch
+              print(response)
+              
+              #Stores the ARN
+              arn = response.get('CertificateArn')
+              print(arn)
+              
+              return arn
+          def delete_cert(domain, client):
+              #TODO
+              return
+          
+          def delete_records(domain, client):
+              #TODO
+              return
 #Route 53 Resources
   lbSubDomain:
     Type: AWS::Route53::RecordSet
@@ -1150,18 +1163,24 @@ Resources:
     Properties:
       Code:
         ZipFile: !Sub |
-          #!/usr/bin/env python
-          # -*- coding: utf-8 -*-
           import json
           import boto3
           from botocore.vendored import requests
-          def empty_delete_buckets(bucket_name):
-              """
-              Empties and deletes the bucket
-              :param bucket_name:
-              :param region:
-              :return:
-              """
+          
+          def fill_bucket(bucket_name):
+              print "trying to fill the bucket {0}".format(bucket_name)
+              s3_client = boto3.client('s3')
+              s3 = boto3.resource('s3')
+              try:
+                  bucket = s3.Bucket(bucket_name).load()
+              except ClientError:
+                  print "bucket {0} does not exist".format(bucket_name)
+                  return
+              # TODO: Put objects in the bucket.
+              try:
+                  bucket.put_object()
+                  
+          def empty_bucket(bucket_name):
               print "trying to delete the bucket {0}".format(bucket_name)
               s3_client = boto3.client('s3')
               s3 = boto3.resource('s3')
@@ -1173,6 +1192,7 @@ Resources:
               # Check if versioning is enabled
               response = s3_client.get_bucket_versioning(Bucket=bucket_name)
               status = response.get('Status','')
+              # Suspends versioning if enabled
               if status == 'Enabled':
                   response = s3_client.put_bucket_versioning(Bucket=bucket_name,
                                                              VersioningConfiguration={'Status': 'Suspended'})
@@ -1210,7 +1230,9 @@ Resources:
               try:
                   bucket = event['ResourceProperties']['BucketName']
                   if event['RequestType'] == 'Delete':
-                      empty_delete_buckets(bucket)
+                      empty_bucket(bucket)
+                  if event['RequestType'] == 'Create':
+                      fill_bucket(bucket)
                   sendResponseCfn(event, context, "SUCCESS")
               except Exception as e:
                   print(e)
@@ -1227,8 +1249,8 @@ Resources:
       Description: cleanup Bucket on Delete Lambda function.
       FunctionName: !Sub ${AWS::StackName}-S3-Cleaner
       Handler: index.lambda_handler
-      Role : !GetAtt cleanupBucketLambdaRole.Arn
-      Runtime: python2.7
+      Role: !GetAtt cleanupBucketLambdaRole.Arn
+      Runtime: python3.8
       Timeout: 60
 #Database Resources
   dynamoTable:
