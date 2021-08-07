@@ -810,7 +810,7 @@ Resources:
             Resource:
             - !Sub arn:${AWS::Partition}:route53:::hostedzone/${!Ref HostedZoneId}
             - !Sub arn:${AWS::Partition}:acm:us-east-1:${AWS::AccountId}:certificate/*
-  cleanupBucketLambdaRole:
+  bucketLambdaRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -824,7 +824,7 @@ Resources:
           - sts:AssumeRole
       Path: "/"
       Policies:
-      - PolicyName: !Sub ${AWS::StackName}-S3-Cleaner-Policy
+      - PolicyName: !Sub ${AWS::StackName}-S3-Lambda-Policy
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -981,16 +981,16 @@ Resources:
                   )
                   acmClient = boto3.client('acm', config=my_config)
                   
-                  #Other Cert Names
-                  wildDomain = "*." + region
-                  
                   #Logic
                   if event['RequestType'] == 'Create':
+                      wildDomain = "*." + region
                       rootArn = create_cert(rootDomain, client)
                       wildArn = create_cert(wildDomain, client)
                   if event['RequestType'] == 'Delete':
-                      delete_cert(rootDomain, client)
-                      delete_cert(wildDomain, client)
+                      rootArn = ''
+                      wildArn = ''
+                      delete_cert(rootArn, client)
+                      delete_cert(wildArn, client)
                       delete_records(rootDomain, client)
                   sendResponseCfn(event, context, "SUCCESS", rootArn, wildArn)
               except Exception as e:
@@ -1023,8 +1023,14 @@ Resources:
               print(arn)
               
               return arn
-          def delete_cert(domain, client):
+          def delete_cert(arn, client):
               #TODO
+              response = client.list_certificates()
+              
+              response = client.delete_certificate(
+                  CertificateArn=arn
+              )
+              
               return
           
           def delete_records(domain, client):
@@ -1148,15 +1154,15 @@ Resources:
               - 's3:*'
             Resource:
               - '*'
-  cleanupBucket:
+  bucketCodeCaller:
     #Source: https://gist.github.com/drumadrian/e1601ab34e7f609b5075f65599108960
-    Type: Custom::cleanupBucket
-    DependsOn: cleanupBucketLambda
+    Type: Custom::bucketCodeCaller
+    DependsOn: bucketLambda
     Properties:
       ServiceToken:
-        !GetAtt cleanupBucketLambda.Arn
+        !GetAtt bucketLambda.Arn
       BucketName: !Ref mainS3Bucket
-  cleanupBucketLambda:
+  bucketLambda:
     #Source: https://gist.github.com/drumadrian/e1601ab34e7f609b5075f65599108960
     DependsOn: mainS3Bucket
     Type: AWS::Lambda::Function
@@ -1173,12 +1179,11 @@ Resources:
               s3 = boto3.resource('s3')
               try:
                   bucket = s3.Bucket(bucket_name).load()
+                  return
               except ClientError:
                   print "bucket {0} does not exist".format(bucket_name)
                   return
               # TODO: Put objects in the bucket.
-              try:
-                  bucket.put_object()
                   
           def empty_bucket(bucket_name):
               print "trying to delete the bucket {0}".format(bucket_name)
@@ -1246,10 +1251,10 @@ Resources:
                                'LogicalResourceId': event['LogicalResourceId'],
                                'Data': json.loads("{}")}
               requests.put(event['ResponseURL'], data=json.dumps(response_body))
-      Description: cleanup Bucket on Delete Lambda function.
-      FunctionName: !Sub ${AWS::StackName}-S3-Cleaner
+      Description: Fill and Empty Bucket.
+      FunctionName: !Sub ${AWS::StackName}-S3-Lambda
       Handler: index.lambda_handler
-      Role: !GetAtt cleanupBucketLambdaRole.Arn
+      Role: !GetAtt bucketLambdaRole.Arn
       Runtime: python3.8
       Timeout: 60
 #Database Resources

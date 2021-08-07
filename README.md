@@ -105,6 +105,7 @@ RELEASE NOTES:
       Add architecture diagrams to documentation.
     Added functionality to the lambda function interacting with S3 to fill the bucket.
       Upgraded to Python 3.8
+      Changed name to be reflective of new reality.
       #TODO: Write the fill code.
       #TODO: Test the code.
     Created a lambda to call the certificates to be created in us-east-1 so the demo can occur be deployed with a domain cross-regionally.
