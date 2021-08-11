@@ -17,7 +17,7 @@ Script:
   Log in to the instance.
   Run: python
     This will change the prompt to ">>> ".
-  Run: endpoint = {YOUR_COPIED_ENDPOINT_HERE}
+  Run: endpoint = "{YOUR_COPIED_ENDPOINT_HERE}"
   Run: import redis
     If this fails, run the next two commands:
       sudo yum install python-pip -y
