@@ -609,7 +609,7 @@ Resources:
     Condition: BuildMoreThanOneAZ
     Properties:
       GroupName: !Sub ${AWS::StackName}-Web-Server-Private-SG
-      GroupDescription: Allow HTTP traffic from ALB to Web Servers
+      GroupDescription: Allow HTTP, HTTPS traffic from ALB to Web Servers and ICMP intra-SG
       VpcId: !Ref mainVPC
       SecurityGroupIngress:
         - SourceSecurityGroupId: !Ref mainALBsg
@@ -620,6 +620,10 @@ Resources:
           FromPort: 443
           ToPort: 443
           IpProtocol: tcp
+        - SourceSecurityGroupId: !Ref webServerPrivateSG
+          FromPort: -1
+          ToPort: -1
+          IpProtocol: icmp
   webServerPublicSG:
     Type: AWS::EC2::SecurityGroup
     Condition: BuildOnlyOneAZ
@@ -727,7 +731,7 @@ Resources:
     Condition: BuildMoreThanOneAZ
     Properties:
       GroupName: !Sub ${AWS::StackName}-ALB-Security-Group
-      GroupDescription: Allow HTTP traffic to ALB
+      GroupDescription: Allow HTTP and HTTPS traffic to ALB
       VpcId: !Ref mainVPC
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0

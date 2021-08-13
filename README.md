@@ -112,6 +112,8 @@ RELEASE NOTES:
       #TODO: Test the creation code.
       #TODO: Write the deletion code.
       #TODO: Test the deletion code.
+    Updated webServerPrivateSG to support intra-ICMP traffic.
+    Updated SG/ALB descriptions for HTTPS.
     Added validation of the Route 53 Hosted Zone parameter.
       "Type: AWS::Route53::HostedZone::Id" from "Type: String".
     Added use of the AWS::Partition pseudo parameter in webServerRole.
