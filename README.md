@@ -48,6 +48,7 @@ PLANNED IMPROVEMENTS:
     Create storyline template to point to smaller scoped templates.
 
   - More Functionality:
+    Add static responses to the ALB.
     Add cross-VPC TGW demo.
     Add ECS/EKS/ECR/Fargate demos.
     Add API Gateway demos.
