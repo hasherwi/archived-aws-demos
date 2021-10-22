@@ -12,12 +12,12 @@ Script:
   Access the ElastiCache dashboard.
   Show and copy the primary endpoint for your ElastiCache cluster.
     COPY WITHOUT THE ":6379". Your copy should end in ".com".
-    It should look something like this: mydemo-elasticache-cluster.fuafpw.0001.use1.cache.amazonaws.com
+    It should look something like this: demo-elasticache-cluster.fuafpw.0001.use1.cache.amazonaws.com
   Optional: Walkthrough the security group rules for your instance and cluster.
   Log in to the instance.
   Run: python
     This will change the prompt to ">>> ".
-  Run: endpoint = {YOUR_COPIED_ENDPOINT_HERE}
+  Run: endpoint = "{YOUR_COPIED_ENDPOINT_HERE}"
   Run: import redis
     If this fails, run the next two commands:
       sudo yum install python-pip -y
