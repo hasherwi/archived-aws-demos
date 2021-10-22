@@ -40,5 +40,3 @@ Script:
   Say: And now it's gone. Let's cleanup up our cache finally.
   Run: cache.delete('customer.1234.name')
   Run: cache.delete('customer.1234.state')
-  
-mydemo-elasticache-cluster.fuafpw.0001.use1.cache.amazonaws.com:6379
